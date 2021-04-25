@@ -4,6 +4,8 @@
 #[cfg(not(feature = "std"))]
 extern crate alloc;
 
+mod protocol;
+
 #[cfg(all(any(feature = "hashmap", feature = "std"), feature = "map"))]
 use rustc_hash::{FxHasher};
 #[cfg(all(any(feature = "hashmap", feature = "std"), feature = "map"))]
@@ -13,14 +15,30 @@ use hashbrown::HashMap;
 #[cfg(feature = "std")]
 use std::collections::HashMap;
 
-pub mod protocol;
+pub use protocol::*;
 
 #[cfg(all(any(feature = "hashmap", feature = "std"), feature = "map"))]
-pub type FxBuildHasher = BuildHasherDefault<FxHasher>;
+type FxBuildHasher = BuildHasherDefault<FxHasher>;
 
 #[cfg(all(any(feature = "hashmap", feature = "std"), feature = "map"))]
-pub type FxHashMap<K, V> = HashMap<K, V, FxBuildHasher>;
+type FxHashMap<K, V> = HashMap<K, V, FxBuildHasher>;
 
+/**
+Need for complex Enums, which includes other data:
+```
+enum Complex {
+    A(String),
+    B(u32),
+    C
+}
+enum Primitive {
+    A,
+    B,
+    C,
+}
+```
+PrimitiveEnum should be equivalete for Complex, but without variants inner data
+*/
 pub trait PrimitiveFromEnum {
     type PrimitiveEnum;
 

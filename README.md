@@ -3,6 +3,8 @@
 TODO:
 - fill readme
 - add examples
+- add chrono, time and  features for condition compilation
+- translate docs from russian to english
 
 ## License
 

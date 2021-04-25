@@ -172,7 +172,7 @@ impl Incoming for bool {
 
     #[cfg(feature = "std")]
     fn fill(&self, _: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), Box<dyn Error>> {
-        args.next().ok_or(ProtocolError("args is end".to_string()))?;
+        args.next().ok_or_else( || ProtocolError("args is end".to_string()))?;
         Ok(())
     }
 
@@ -188,7 +188,7 @@ impl Outcoming for bool {
 
     #[cfg(feature = "std")]
     fn read(_: &[u8], args: &mut Iter<u32>) -> Result<Self, Box<dyn Error>> {
-        let el: u32 = *args.next().ok_or(ProtocolError("args is end".to_string()))?;
+        let el: u32 = *args.next().ok_or_else(|| ProtocolError("args is end".to_string()))?;
         Ok(el != 0)
     }
 
@@ -210,7 +210,7 @@ impl Incoming for u8 {
 
     #[cfg(feature = "std")]
     fn fill(&self, _: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), Box<dyn Error>> {
-        args.next().ok_or(ProtocolError("args is end".to_string()))?;
+        args.next().ok_or_else(|| ProtocolError("args is end".to_string()))?;
         Ok(())
     }
 
@@ -226,7 +226,7 @@ impl Outcoming for u8 {
 
     #[cfg(feature = "std")]
     fn read(_: &[u8], args: &mut Iter<u32>) -> Result<Self, Box<dyn Error>> {
-        let el: u32 = *args.next().ok_or(ProtocolError("args is end".to_string()))?;
+        let el: u32 = *args.next().ok_or_else(|| ProtocolError("args is end".to_string()))?;
         Ok(el as u8)
     }
 
@@ -248,7 +248,7 @@ impl Incoming for i32 {
 
     #[cfg(feature = "std")]
     fn fill(&self, _: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), Box<dyn Error>> {
-        args.next().ok_or(ProtocolError("args is end".to_string()))?;
+        args.next().ok_or_else(|| ProtocolError("args is end".to_string()))?;
         Ok(())
     }
 
@@ -264,7 +264,7 @@ impl Outcoming for i32 {
 
     #[cfg(feature = "std")]
     fn read(_: &[u8], args: &mut Iter<u32>) -> Result<Self, Box<dyn Error>> {
-        Ok(*args.next().ok_or(ProtocolError("args is end".to_string()))? as i32)
+        Ok(*args.next().ok_or_else(|| ProtocolError("args is end".to_string()))? as i32)
     }
 
     fn is_need_read() -> bool { false }
@@ -297,8 +297,8 @@ impl Incoming for i64 {
 
     #[cfg(feature = "std")]
     fn fill(&self, _: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), Box<dyn Error>> {
-        args.next().ok_or(ProtocolError("args is end".to_string()))?;
-        args.next().ok_or(ProtocolError("args is end".to_string()))?;
+        args.next().ok_or_else(|| ProtocolError("args is end".to_string()))?;
+        args.next().ok_or_else(|| ProtocolError("args is end".to_string()))?;
         Ok(())
     }
 
@@ -320,8 +320,8 @@ impl Outcoming for i64 {
 
     #[cfg(feature = "std")]
     fn read(_: &[u8], args: &mut Iter<u32>) -> Result<Self, Box<dyn Error>> {
-        let el1: u32 = *args.next().ok_or(ProtocolError("args is end".to_string()))?;
-        let el2: u32 = *args.next().ok_or(ProtocolError("args is end".to_string()))?;
+        let el1: u32 = *args.next().ok_or_else(|| ProtocolError("args is end".to_string()))?;
+        let el2: u32 = *args.next().ok_or_else(|| ProtocolError("args is end".to_string()))?;
         let b1: [u8; 4] = el1.to_le_bytes();
         let b2: [u8; 4] = el2.to_be_bytes();
         let c: Vec<u8> = [&b1[..], &b2[..]].concat();
@@ -348,7 +348,7 @@ impl Incoming for u32 {
 
     #[cfg(feature = "std")]
     fn fill(&self, _: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), Box<dyn Error>> {
-        args.next().ok_or(ProtocolError("args is end".to_string()))?;
+        args.next().ok_or_else(|| ProtocolError("args is end".to_string()))?;
         Ok(())
     }
 
@@ -364,7 +364,7 @@ impl Outcoming for u32 {
 
     #[cfg(feature = "std")]
     fn read(_: &[u8], args: &mut Iter<u32>) -> Result<Self, Box<dyn Error>> {
-        Ok(*args.next().ok_or(ProtocolError("args is end".to_string()))?)
+        Ok(*args.next().ok_or_else(|| ProtocolError("args is end".to_string()))?)
     }
 
     fn is_need_read() -> bool { false }
@@ -397,8 +397,8 @@ impl Incoming for u64 {
 
     #[cfg(feature = "std")]
     fn fill(&self, _: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), Box<dyn Error>> {
-        args.next().ok_or(ProtocolError("args is end".to_string()))?;
-        args.next().ok_or(ProtocolError("args is end".to_string()))?;
+        args.next().ok_or_else(|| ProtocolError("args is end".to_string()))?;
+        args.next().ok_or_else(|| ProtocolError("args is end".to_string()))?;
         Ok(())
     }
 
@@ -420,8 +420,8 @@ impl Outcoming for u64 {
 
     #[cfg(feature = "std")]
     fn read(_: &[u8], args: &mut Iter<u32>) -> Result<Self, Box<dyn Error>> {
-        let el1: u32 = *args.next().ok_or(ProtocolError("args is end".to_string()))?;
-        let el2: u32 = *args.next().ok_or(ProtocolError("args is end".to_string()))?;
+        let el1: u32 = *args.next().ok_or_else(|| ProtocolError("args is end".to_string()))?;
+        let el2: u32 = *args.next().ok_or_else(|| ProtocolError("args is end".to_string()))?;
         let b1: [u8; 4] = el1.to_le_bytes();
         let b2: [u8; 4] = el2.to_be_bytes();
         let c: Vec<u8> = [&b1[..], &b2[..]].concat();
@@ -451,7 +451,7 @@ impl Incoming for usize {
 
     #[cfg(feature = "std")]
     fn fill(&self, _: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), Box<dyn Error>> {
-        args.next().ok_or(ProtocolError("args is end".to_string()))?;
+        args.next().ok_or_else(|| ProtocolError("args is end".to_string()))?;
         Ok(())
     }
 
@@ -469,7 +469,7 @@ impl Outcoming for usize {
 
     #[cfg(feature = "std")]
     fn read(_: &[u8], args: &mut Iter<u32>) -> Result<Self, Box<dyn Error>> {
-        let el: u32 = *args.next().ok_or(ProtocolError("args is end".to_string()))?;
+        let el: u32 = *args.next().ok_or_else(|| ProtocolError("args is end".to_string()))?;
         Ok(el as usize)
     }
 
@@ -492,7 +492,7 @@ impl Incoming for isize {
 
     #[cfg(feature = "std")]
     fn fill(&self, _: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), Box<dyn Error>> {
-        args.next().ok_or(ProtocolError("args is end".to_string()))?;
+        args.next().ok_or_else(|| ProtocolError("args is end".to_string()))?;
         Ok(())
     }
 
@@ -509,7 +509,7 @@ impl Outcoming for isize {
 
     #[cfg(feature = "std")]
     fn read(_: &[u8], args: &mut Iter<u32>) -> Result<Self, Box<dyn Error>> {
-        let el: u32 = *args.next().ok_or(ProtocolError("args is end".to_string()))?;
+        let el: u32 = *args.next().ok_or_else(|| ProtocolError("args is end".to_string()))?;
         Ok(el as isize)
     }
 
@@ -535,7 +535,7 @@ impl Incoming for f32 {
 
     #[cfg(feature = "std")]
     fn fill(&self, _: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), Box<dyn Error>> {
-        args.next().ok_or(ProtocolError("args is end".to_string()))?;
+        args.next().ok_or_else(|| ProtocolError("args is end".to_string()))?;
         Ok(())
     }
 
@@ -553,7 +553,7 @@ impl Outcoming for f32 {
 
     #[cfg(feature = "std")]
     fn read(_: &[u8], args: &mut Iter<u32>) -> Result<Self, Box<dyn Error>> {
-        let el: u32 = *args.next().ok_or(ProtocolError("args is end".to_string()))?;
+        let el: u32 = *args.next().ok_or_else(|| ProtocolError("args is end".to_string()))?;
         let bytes: [u8; 4] = el.to_le_bytes();
         let f = f32::from_le_bytes(bytes);
         Ok(f)
@@ -589,8 +589,8 @@ impl Incoming for f64 {
 
     #[cfg(feature = "std")]
     fn fill(&self, _: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), Box<dyn Error>> {
-        args.next().ok_or(ProtocolError("args is end".to_string()))?;
-        args.next().ok_or(ProtocolError("args is end".to_string()))?;
+        args.next().ok_or_else(|| ProtocolError("args is end".to_string()))?;
+        args.next().ok_or_else(|| ProtocolError("args is end".to_string()))?;
         Ok(())
     }
 
@@ -612,8 +612,8 @@ impl Outcoming for f64 {
 
     #[cfg(feature = "std")]
     fn read(_: &[u8], args: &mut Iter<u32>) -> Result<Self, Box<dyn Error>> {
-        let el1: u32 = *args.next().ok_or(ProtocolError("args is end".to_string()))?;
-        let el2: u32 = *args.next().ok_or(ProtocolError("args is end".to_string()))?;
+        let el1: u32 = *args.next().ok_or_else(|| ProtocolError("args is end".to_string()))?;
+        let el2: u32 = *args.next().ok_or_else(|| ProtocolError("args is end".to_string()))?;
         let b1: [u8; 4] = el1.to_le_bytes();
         let b2: [u8; 4] = el2.to_be_bytes();
         let c: Vec<u8> = [&b1[..], &b2[..]].concat();
@@ -652,7 +652,7 @@ impl Incoming for String {
 
     #[cfg(feature = "std")]
     fn fill(&self, heap: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), Box<dyn Error>> {
-        let ptr: usize = *args.next().ok_or(ProtocolError("args is end".to_string()))? as usize; // its pointer to string
+        let ptr: usize = *args.next().ok_or_else(|| ProtocolError("args is end".to_string()))? as usize; // its pointer to string
         let mut pointer = ptr;
         for byte in self.as_bytes() {
             heap[pointer] = *byte;
@@ -672,8 +672,8 @@ impl Outcoming for String {
 
     #[cfg(feature = "std")]
     fn read(heap: &[u8], args: &mut Iter<u32>)  -> Result<Self, Box<dyn Error>> {
-        let len = *args.next().ok_or(ProtocolError("args is end".to_string()))? as usize;
-        let ptr = *args.next().ok_or(ProtocolError("args is end".to_string()))? as usize;
+        let len = *args.next().ok_or_else(|| ProtocolError("args is end".to_string()))? as usize;
+        let ptr = *args.next().ok_or_else(|| ProtocolError("args is end".to_string()))? as usize;
         let bytes = &heap[ptr..ptr + len];
         // TODO: or from_utf8_unchecked ?
         Ok(String::from_utf8(bytes.to_vec())?)
@@ -698,8 +698,8 @@ impl Incoming for Duration {
 
     #[cfg(feature = "std")]
     fn fill(&self, _: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), Box<dyn Error>> {
-        args.next().ok_or(ProtocolError("args is end".to_string()))?;
-        args.next().ok_or(ProtocolError("args is end".to_string()))?;
+        args.next().ok_or_else(|| ProtocolError("args is end".to_string()))?;
+        args.next().ok_or_else(|| ProtocolError("args is end".to_string()))?;
         Ok(())
     }
 
@@ -746,8 +746,8 @@ impl Incoming for DateTime<Utc> {
 
     #[cfg(feature = "std")]
     fn fill(&self, _: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), Box<dyn Error>> {
-        args.next().ok_or(ProtocolError("args is end".to_string()))?;
-        args.next().ok_or(ProtocolError("args is end".to_string()))?;
+        args.next().ok_or_else(|| ProtocolError("args is end".to_string()))?;
+        args.next().ok_or_else(|| ProtocolError("args is end".to_string()))?;
         Ok(())
     }
 
@@ -794,7 +794,7 @@ impl Incoming for Date<Utc> {
 
     #[cfg(feature = "std")]
     fn fill(&self, _: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), Box<dyn Error>> {
-        args.next().ok_or(ProtocolError("args is end".to_string()))?;
+        args.next().ok_or_else(|| ProtocolError("args is end".to_string()))?;
         Ok(())
     }
 
@@ -841,8 +841,8 @@ impl Incoming for time::Duration {
 
     #[cfg(feature = "std")]
     fn fill(&self, _: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), Box<dyn Error>> {
-        args.next().ok_or(ProtocolError("args is end".to_string()))?;
-        args.next().ok_or(ProtocolError("args is end".to_string()))?;
+        args.next().ok_or_else(|| ProtocolError("args is end".to_string()))?;
+        args.next().ok_or_else(|| ProtocolError("args is end".to_string()))?;
         Ok(())
     }
 
@@ -889,8 +889,8 @@ impl Incoming for time::OffsetDateTime {
 
     #[cfg(feature = "std")]
     fn fill(&self, _: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), Box<dyn Error>> {
-        args.next().ok_or(ProtocolError("args is end".to_string()))?;
-        args.next().ok_or(ProtocolError("args is end".to_string()))?;
+        args.next().ok_or_else(|| ProtocolError("args is end".to_string()))?;
+        args.next().ok_or_else(|| ProtocolError("args is end".to_string()))?;
         Ok(())
     }
 
@@ -937,8 +937,8 @@ impl Incoming for time::Date {
 
     #[cfg(feature = "std")]
     fn fill(&self, _: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), Box<dyn Error>> {
-        args.next().ok_or(ProtocolError("args is end".to_string()))?;
-        args.next().ok_or(ProtocolError("args is end".to_string()))?;
+        args.next().ok_or_else(|| ProtocolError("args is end".to_string()))?;
+        args.next().ok_or_else(|| ProtocolError("args is end".to_string()))?;
         Ok(())
     }
 
@@ -967,6 +967,9 @@ impl Outcoming for time::Date {
     }
 }
 
+/**
+convert u32 to time::Time
+*/
 #[cfg(feature = "time")]
 pub const fn time_from_u32(u: u32) -> Result<time::Time, time::ComponentRangeError> {
     let bytes: [u8; 4] = u.to_le_bytes();
@@ -976,13 +979,15 @@ pub const fn time_from_u32(u: u32) -> Result<time::Time, time::ComponentRangeErr
     time::Time::try_from_hms(hour, minute, second)
 }
 
+/**
+convert time::Time to u32
+*/
 #[cfg(feature = "time")]
 pub const fn time_into_u32(time: &time::Time) -> u32 {
     let hour = time.hour();
     let minute = time.minute();
     let second = time.second();
-    let u = u32::from_le_bytes([hour, minute, second,  0]);
-    u
+    u32::from_le_bytes([hour, minute, second,  0])
 }
 
 #[cfg(feature = "time")]
@@ -1003,7 +1008,7 @@ impl Incoming for time::Time {
 
     #[cfg(feature = "std")]
     fn fill(&self, _: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), Box<dyn Error>> {
-        args.next().ok_or(ProtocolError("args is end".to_string()))?;
+        args.next().ok_or_else(|| ProtocolError("args is end".to_string()))?;
         Ok(())
     }
 
@@ -1033,6 +1038,8 @@ impl Outcoming for time::Time {
     }
 }
 
+// TODO: used?
+#[derive(PartialEq, Clone, Default)]
 pub struct Bytes(Vec<u8>);
 
 // TODO: for wasm64 other logic
@@ -1081,10 +1088,10 @@ impl Incoming for Bytes {
 
         for _ in 0..quot {
             let bytes: [u8; 4] = [
-                *iter.next().ok_or(ProtocolError("args is end".to_string()))?,
-                *iter.next().ok_or(ProtocolError("args is end".to_string()))?,
-                *iter.next().ok_or(ProtocolError("args is end".to_string()))?,
-                *iter.next().ok_or(ProtocolError("args is end".to_string()))?,
+                *iter.next().ok_or_else(|| ProtocolError("args is end".to_string()))?,
+                *iter.next().ok_or_else(|| ProtocolError("args is end".to_string()))?,
+                *iter.next().ok_or_else(|| ProtocolError("args is end".to_string()))?,
+                *iter.next().ok_or_else(|| ProtocolError("args is end".to_string()))?,
             ];
 
             let u = u32::from_le_bytes(bytes);
@@ -1092,7 +1099,7 @@ impl Incoming for Bytes {
         }
 
         if !is_divided {
-            let b1 = *iter.next().ok_or(ProtocolError("args is end".to_string()))?;
+            let b1 = *iter.next().ok_or_else(|| ProtocolError("args is end".to_string()))?;
             let b2 = *iter.next().unwrap_or(&0);
             let b3 = *iter.next().unwrap_or(&0);
             let b4 = *iter.next().unwrap_or(&0);
@@ -1108,7 +1115,7 @@ impl Incoming for Bytes {
 
     #[cfg(feature = "std")]
     fn fill(&self, _: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), Box<dyn Error>> {
-        args.next().ok_or(ProtocolError("args is end".to_string()))?; // len
+        args.next().ok_or_else(|| ProtocolError("args is end".to_string()))?; // len
         let len = self.0.len();
         let quot = len / 4;
         let rem = len % 4;
@@ -1116,7 +1123,7 @@ impl Incoming for Bytes {
         let count = if is_divided { quot } else { quot + 1 };
 
         for _ in 0..count {
-            args.next().ok_or(ProtocolError("args is end".to_string()))?;
+            args.next().ok_or_else(|| ProtocolError("args is end".to_string()))?;
         }
         Ok(())
     }
@@ -1171,14 +1178,14 @@ impl Outcoming for Bytes {
     // TODO: https://stackoverflow.com/questions/49690459/converting-a-vecu32-to-vecu8-in-place-and-with-minimal-overhead
     #[cfg(feature = "std")]
     fn read(_: &[u8], args: &mut Iter<u32>) -> Result<Self, Box<dyn Error>> {
-        let len = *args.next().ok_or(ProtocolError("args is end".to_string()))? as usize;
+        let len = *args.next().ok_or_else(|| ProtocolError("args is end".to_string()))? as usize;
         let quot = len / 4;
         let rem = len % 4;
         let is_divided = rem == 0;
         let mut vec: Vec<u8> = Vec::with_capacity(len);
 
         for _ in 0..quot {
-            let u = *args.next().ok_or(ProtocolError("args is end".to_string()))?;
+            let u = *args.next().ok_or_else(|| ProtocolError("args is end".to_string()))?;
             let bytes: [u8; 4] = u.to_le_bytes();
             for byte in &bytes {
                 vec.push(*byte);
@@ -1186,11 +1193,11 @@ impl Outcoming for Bytes {
         }
 
         if !is_divided {
-            let u = *args.next().ok_or(ProtocolError("args is end".to_string()))?;
+            let u = *args.next().ok_or_else(|| ProtocolError("args is end".to_string()))?;
             let bytes: [u8; 4] = u.to_le_bytes();
             let mut iter = bytes.iter();
             for _ in 0..rem {
-                let byte = *iter.next().ok_or(ProtocolError("args is end".to_string()))?;
+                let byte = *iter.next().ok_or_else(|| ProtocolError("args is end".to_string()))?;
                 vec.push(byte);
             }
         }
@@ -1231,7 +1238,7 @@ impl<T: Incoming> Incoming for Vec<T> {
 
     #[cfg(feature = "std")]
     fn fill(&self, heap: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), Box<dyn Error>> {
-        args.next().ok_or(ProtocolError("args is end".to_string()))?; // len
+        args.next().ok_or_else(|| ProtocolError("args is end".to_string()))?; // len
         for item in self {
             item.fill(heap, args)?;
         }
@@ -1256,7 +1263,7 @@ impl<T: Outcoming> Outcoming for Vec<T> {
 
     #[cfg(feature = "std")]
     fn read(heap: &[u8], args: &mut Iter<u32>) -> Result<Self, Box<dyn Error>> {
-        let len = *args.next().ok_or(ProtocolError("args is end".to_string()))? as usize;
+        let len = *args.next().ok_or_else(|| ProtocolError("args is end".to_string()))? as usize;
         let mut vec: Vec<T> = Vec::with_capacity(len);
 
         for _ in 0..len {
@@ -1301,7 +1308,7 @@ impl<T: Incoming> Incoming for Option<T> {
 
     #[cfg(feature = "std")]
     fn fill(&self, heap: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), Box<dyn Error>> {
-        args.next().ok_or(ProtocolError("args is end".to_string()))?;
+        args.next().ok_or_else(|| ProtocolError("args is end".to_string()))?;
         if let Some(item) = self {
             item.fill(heap, args)?;
         }
@@ -1328,7 +1335,7 @@ impl<T: Outcoming> Outcoming for Option<T> {
 
     #[cfg(feature = "std")]
     fn read(heap: &[u8], args: &mut Iter<u32>) -> Result<Self, Box<dyn Error>> {
-        let is_some = *args.next().ok_or(ProtocolError("args is end".to_string()))? != 0;
+        let is_some = *args.next().ok_or_else(|| ProtocolError("args is end".to_string()))? != 0;
 
         if !is_some {
             Ok(None)
@@ -1368,7 +1375,7 @@ impl<K: Incoming, V: Incoming> Incoming for HashMap<K, V>
 
     #[cfg(feature = "std")]
     fn fill(&self, heap: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), Box<dyn Error>> {
-        args.next().ok_or(ProtocolError("args is end".to_string()))?; // len
+        args.next().ok_or_else(|| ProtocolError("args is end".to_string()))?; // len
         for (key, value) in self {
             key.fill(heap, args)?;
             value.fill(heap, args)?;
@@ -1397,12 +1404,12 @@ impl<K: Outcoming, V: Outcoming> Outcoming for HashMap<K, V>
 
     #[cfg(feature = "std")]
     fn read(heap: &[u8], args: &mut Iter<u32>) -> Result<Self, Box<dyn Error>> {
-        let len = *args.next().ok_or(ProtocolError("args is end".to_string()))? as usize;
+        let len = *args.next().ok_or_else(|| ProtocolError("args is end".to_string()))? as usize;
         let mut map: HashMap<K, V> = HashMap::with_capacity(len);
         for _ in 0..len {
             let key: K = K::read(heap, args)?;
             let value: V = V::read(heap, args)?;
-            map.insert(key, value).ok_or(ProtocolError("map already have item".to_string()))?;
+            map.insert(key, value).ok_or_else(|| ProtocolError("map already have item".to_string()))?;
         }
         Ok(map)
     }
@@ -1439,7 +1446,7 @@ impl<K: Incoming, V: Incoming> Incoming for BTreeMap<K, V>
 
     #[cfg(feature = "std")]
     fn fill(&self, heap: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), Box<dyn Error>> {
-        args.next().ok_or(ProtocolError("args is end".to_string()))?; // len
+        args.next().ok_or_else(|| ProtocolError("args is end".to_string()))?; // len
         for (key, value) in self {
             key.fill(heap, args)?;
             value.fill(heap, args)?;
@@ -1467,12 +1474,12 @@ impl<K: Outcoming, V: Outcoming> Outcoming for BTreeMap<K, V>
 
     #[cfg(feature = "std")]
     fn read(heap: &[u8], args: &mut Iter<u32>) -> Result<Self, Box<dyn Error>> {
-        let len = *args.next().ok_or(ProtocolError("args is end".to_string()))? as usize;
+        let len = *args.next().ok_or_else(|| ProtocolError("args is end".to_string()))? as usize;
         let mut map: BTreeMap<K, V> = BTreeMap::new();
         for _ in 0..len {
             let key: K = K::read(heap, args)?;
             let value: V = V::read(heap, args)?;
-            map.insert(key, value).ok_or(ProtocolError("map already have item".to_string()))?;
+            map.insert(key, value).ok_or_else(|| ProtocolError("map already have item".to_string()))?;
         }
         Ok(map)
     }
@@ -1510,7 +1517,7 @@ impl<K: Incoming, V: Incoming> Incoming for FxHashMap<K, V>
 
     #[cfg(feature = "std")]
     fn fill(&self, heap: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), Box<dyn Error>> {
-        args.next().ok_or(ProtocolError("args is end".to_string()))?;
+        args.next().ok_or_else(|| ProtocolError("args is end".to_string()))?;
         for (key, value) in self {
             key.fill(heap, args)?;
             value.fill(heap, args)?;
@@ -1539,12 +1546,12 @@ impl<K: Outcoming, V: Outcoming> Outcoming for FxHashMap<K, V>
 
     #[cfg(feature = "std")]
     fn read(heap: &[u8], args: &mut Iter<u32>) -> Result<Self, Box<dyn Error>> {
-        let len = *args.next().ok_or(ProtocolError("args is end".to_string()))? as usize;
+        let len = *args.next().ok_or_else(|| ProtocolError("args is end".to_string()))? as usize;
         let mut map: FxHashMap<K, V> = FxHashMap::with_capacity_and_hasher(len, FxBuildHasher::default());
         for _ in 0..len {
             let key: K = K::read(heap, args)?;
             let value: V = V::read(heap, args)?;
-            map.insert(key, value).ok_or(ProtocolError("map already have item".to_string()))?;
+            map.insert(key, value).ok_or_else(|| ProtocolError("map already have item".to_string()))?;
         }
         Ok(map)
     }
