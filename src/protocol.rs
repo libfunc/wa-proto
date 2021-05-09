@@ -1032,7 +1032,8 @@ impl Outcoming for time::OffsetDateTime {
     #[cfg(feature = "std")]
     fn read(heap: &[u8], args: &mut Iter<u32>) -> Result<Self, Box<dyn Error>> {
         let secs = i64::read(heap, args)?;
-        Ok(Self::from_unix_timestamp(secs))
+        Self::from_unix_timestamp(secs)
+            .map_err(|_| ProtocolError::from("cannot read datetime").into())
     }
 
     fn is_need_read() -> bool {
@@ -1051,7 +1052,7 @@ impl Incoming for time::Date {
 
     #[cfg(feature = "std")]
     fn args(&self, args: &mut Vec<u32>) -> Result<(), Box<dyn Error>> {
-        let days = self.julian_day();
+        let days = self.to_julian_day();
         days.args(args)?;
         Ok(())
     }
@@ -1081,8 +1082,8 @@ impl Outcoming for time::Date {
 
     #[cfg(feature = "std")]
     fn read(heap: &[u8], args: &mut Iter<u32>) -> Result<Self, Box<dyn Error>> {
-        let days = i64::read(heap, args)?;
-        Ok(Self::from_julian_day(days))
+        let days = i32::read(heap, args)?;
+        Self::from_julian_day(days).map_err(|_| ProtocolError::from("cannot read datetime").into())
     }
 
     fn is_need_read() -> bool {
@@ -1094,12 +1095,12 @@ impl Outcoming for time::Date {
 convert u32 to time::Time
 */
 #[cfg(feature = "time")]
-pub const fn time_from_u32(u: u32) -> Result<time::Time, time::ComponentRangeError> {
+pub const fn time_from_u32(u: u32) -> Result<time::Time, time::error::ComponentRange> {
     let bytes: [u8; 4] = u.to_le_bytes();
     let hour = bytes[0];
     let minute = bytes[1];
     let second = bytes[2];
-    time::Time::try_from_hms(hour, minute, second)
+    time::Time::from_hms(hour, minute, second)
 }
 
 /**
