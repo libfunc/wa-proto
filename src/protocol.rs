@@ -996,7 +996,10 @@ impl Incoming for time::OffsetDateTime {
     fn init(args: &mut IterMut<u32>) -> Result<(u32, Self), ProtocolError> {
         let (_, secs) = i64::init(args)?;
         let dt = Self::from_unix_timestamp(secs);
-        Ok((0, dt))
+        match dt {
+            Ok(dt) => Ok((0, dt)),
+            Err(_) => Err(ProtocolError(TIME_PARSE_ERROR)),
+        }
     }
 
     #[cfg(feature = "std")]
@@ -1045,9 +1048,12 @@ impl Outcoming for time::OffsetDateTime {
 impl Incoming for time::Date {
     #[cfg(not(feature = "std"))]
     fn init(args: &mut IterMut<u32>) -> Result<(u32, Self), ProtocolError> {
-        let (_, days) = i64::init(args)?;
+        let (_, days) = i32::init(args)?;
         let d = Self::from_julian_day(days);
-        Ok((0, d))
+        match d {
+            Ok(d) => Ok((0, d)),
+            Err(_) => Err(ProtocolError(TIME_PARSE_ERROR)),
+        }
     }
 
     #[cfg(feature = "std")]
@@ -1075,7 +1081,7 @@ impl Incoming for time::Date {
 impl Outcoming for time::Date {
     #[cfg(not(feature = "std"))]
     fn args(&self, args: &mut Vec<u32>) -> Result<(), ProtocolError> {
-        let days = self.julian_day();
+        let days = self.to_julian_day();
         days.args(args)?;
         Ok(())
     }
