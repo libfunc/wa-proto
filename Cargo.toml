@@ -37,10 +37,6 @@ hashbrown = { version = "0.11", optional = true }
 rustc-hash = { version = "1.1", optional = true, default-features = false }
 bincode = { version = "1.3", optional = true }
 
-[dependencies.num-traits]
-version = "0.2"
-default-features = false
-
 [dependencies.chrono] # date and time support for rust
 version = "0.4"
 default-features = false
