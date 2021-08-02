@@ -49,7 +49,13 @@ pub const BYTES_INTO_ARR4_ERROR: u32 = 3;
 pub const BYTES_INTO_ARR8_ERROR: u32 = 4;
 pub const MAP_INSERT_ERROR: u32 = 5;
 pub const STRING_FROM_BYTES_ERROR: u32 = 6;
+
+#[cfg(feature = "std")]
+pub const ENUM_FROM_U32_ERROR: &str = "enum from u32 error";
+
+#[cfg(not(feature = "std"))]
 pub const ENUM_FROM_U32_ERROR: u32 = 7;
+
 pub const TIME_PARSE_ERROR: u32 = 8;
 
 #[cfg(feature = "std")]
