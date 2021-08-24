@@ -65,6 +65,27 @@ impl From<&str> for ProtocolError {
     }
 }
 
+#[cfg(feature = "std")]
+impl From<std::array::TryFromSliceError> for ProtocolError {
+    fn from(_: std::array::TryFromSliceError) -> Self {
+        ProtocolError("slice len error".to_string())
+    }
+}
+
+#[cfg(feature = "std")]
+impl From<std::string::FromUtf8Error> for ProtocolError {
+    fn from(_: std::string::FromUtf8Error) -> Self {
+        ProtocolError("utf-8 string bytes error".to_string())
+    }
+}
+
+#[cfg(feature = "std")]
+impl From<time::error::ComponentRange> for ProtocolError {
+    fn from(_: time::error::ComponentRange) -> Self {
+        ProtocolError("time from u32 error".to_string())
+    }
+}
+
 #[cfg(not(feature = "std"))]
 impl From<u32> for ProtocolError {
     fn from(s: u32) -> Self {
@@ -117,7 +138,7 @@ pub trait Incoming {
     Вызывается на хосте.
     */
     #[cfg(feature = "std")]
-    fn args(&self, args: &mut Vec<u32>) -> Result<(), Box<dyn Error>>;
+    fn args(&self, args: &mut Vec<u32>) -> Result<(), ProtocolError>;
 
     /**
     Заполнение данными инициализированный участок памяти.
@@ -126,7 +147,7 @@ pub trait Incoming {
     уместить в значении u32.
     */
     #[cfg(feature = "std")]
-    fn fill(&self, heap: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), Box<dyn Error>>;
+    fn fill(&self, heap: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), ProtocolError>;
 
     /**
     Функиця указывает на то что необходимо инициализировать даные, а затем заполнить
@@ -159,7 +180,7 @@ pub trait Outcoming {
     Вызывается на хосте.
     */
     #[cfg(feature = "std")]
-    fn read(heap: &[u8], args: &mut Iter<u32>) -> Result<Self, Box<dyn Error>>
+    fn read(heap: &[u8], args: &mut Iter<u32>) -> Result<Self, ProtocolError>
     where
         Self: Sized;
 
@@ -179,13 +200,13 @@ impl Incoming for bool {
     }
 
     #[cfg(feature = "std")]
-    fn args(&self, args: &mut Vec<u32>) -> Result<(), Box<dyn Error>> {
+    fn args(&self, args: &mut Vec<u32>) -> Result<(), ProtocolError> {
         args.push(if *self { 1 } else { 0 });
         Ok(())
     }
 
     #[cfg(feature = "std")]
-    fn fill(&self, _: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), Box<dyn Error>> {
+    fn fill(&self, _: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), ProtocolError> {
         args.next()
             .ok_or_else(|| ProtocolError("args is end".to_string()))?;
         Ok(())
@@ -204,7 +225,7 @@ impl Outcoming for bool {
     }
 
     #[cfg(feature = "std")]
-    fn read(_: &[u8], args: &mut Iter<u32>) -> Result<Self, Box<dyn Error>> {
+    fn read(_: &[u8], args: &mut Iter<u32>) -> Result<Self, ProtocolError> {
         let el: u32 = *args
             .next()
             .ok_or_else(|| ProtocolError("args is end".to_string()))?;
@@ -224,13 +245,13 @@ impl Incoming for u8 {
     }
 
     #[cfg(feature = "std")]
-    fn args(&self, args: &mut Vec<u32>) -> Result<(), Box<dyn Error>> {
+    fn args(&self, args: &mut Vec<u32>) -> Result<(), ProtocolError> {
         args.push(*self as u32);
         Ok(())
     }
 
     #[cfg(feature = "std")]
-    fn fill(&self, _: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), Box<dyn Error>> {
+    fn fill(&self, _: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), ProtocolError> {
         args.next()
             .ok_or_else(|| ProtocolError("args is end".to_string()))?;
         Ok(())
@@ -249,7 +270,7 @@ impl Outcoming for u8 {
     }
 
     #[cfg(feature = "std")]
-    fn read(_: &[u8], args: &mut Iter<u32>) -> Result<Self, Box<dyn Error>> {
+    fn read(_: &[u8], args: &mut Iter<u32>) -> Result<Self, ProtocolError> {
         let el: u32 = *args
             .next()
             .ok_or_else(|| ProtocolError("args is end".to_string()))?;
@@ -269,13 +290,13 @@ impl Incoming for i32 {
     }
 
     #[cfg(feature = "std")]
-    fn args(&self, args: &mut Vec<u32>) -> Result<(), Box<dyn Error>> {
+    fn args(&self, args: &mut Vec<u32>) -> Result<(), ProtocolError> {
         args.push(*self as u32);
         Ok(())
     }
 
     #[cfg(feature = "std")]
-    fn fill(&self, _: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), Box<dyn Error>> {
+    fn fill(&self, _: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), ProtocolError> {
         args.next()
             .ok_or_else(|| ProtocolError("args is end".to_string()))?;
         Ok(())
@@ -294,7 +315,7 @@ impl Outcoming for i32 {
     }
 
     #[cfg(feature = "std")]
-    fn read(_: &[u8], args: &mut Iter<u32>) -> Result<Self, Box<dyn Error>> {
+    fn read(_: &[u8], args: &mut Iter<u32>) -> Result<Self, ProtocolError> {
         Ok(*args
             .next()
             .ok_or_else(|| ProtocolError("args is end".to_string()))? as i32)
@@ -321,7 +342,7 @@ impl Incoming for i64 {
     }
 
     #[cfg(feature = "std")]
-    fn args(&self, args: &mut Vec<u32>) -> Result<(), Box<dyn Error>> {
+    fn args(&self, args: &mut Vec<u32>) -> Result<(), ProtocolError> {
         let bytes: [u8; 8] = self.to_le_bytes();
         let arr1: &[u8; 4] = bytes[0..4].try_into()?;
         let arr2: &[u8; 4] = bytes[4..8].try_into()?;
@@ -333,7 +354,7 @@ impl Incoming for i64 {
     }
 
     #[cfg(feature = "std")]
-    fn fill(&self, _: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), Box<dyn Error>> {
+    fn fill(&self, _: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), ProtocolError> {
         args.next()
             .ok_or_else(|| ProtocolError("args is end".to_string()))?;
         args.next()
@@ -364,7 +385,7 @@ impl Outcoming for i64 {
     }
 
     #[cfg(feature = "std")]
-    fn read(_: &[u8], args: &mut Iter<u32>) -> Result<Self, Box<dyn Error>> {
+    fn read(_: &[u8], args: &mut Iter<u32>) -> Result<Self, ProtocolError> {
         let el1: u32 = *args
             .next()
             .ok_or_else(|| ProtocolError("args is end".to_string()))?;
@@ -392,13 +413,13 @@ impl Incoming for u32 {
     }
 
     #[cfg(feature = "std")]
-    fn args(&self, args: &mut Vec<u32>) -> Result<(), Box<dyn Error>> {
+    fn args(&self, args: &mut Vec<u32>) -> Result<(), ProtocolError> {
         args.push(*self);
         Ok(())
     }
 
     #[cfg(feature = "std")]
-    fn fill(&self, _: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), Box<dyn Error>> {
+    fn fill(&self, _: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), ProtocolError> {
         args.next()
             .ok_or_else(|| ProtocolError("args is end".to_string()))?;
         Ok(())
@@ -417,7 +438,7 @@ impl Outcoming for u32 {
     }
 
     #[cfg(feature = "std")]
-    fn read(_: &[u8], args: &mut Iter<u32>) -> Result<Self, Box<dyn Error>> {
+    fn read(_: &[u8], args: &mut Iter<u32>) -> Result<Self, ProtocolError> {
         Ok(*args
             .next()
             .ok_or_else(|| ProtocolError("args is end".to_string()))?)
@@ -444,7 +465,7 @@ impl Incoming for u64 {
     }
 
     #[cfg(feature = "std")]
-    fn args(&self, args: &mut Vec<u32>) -> Result<(), Box<dyn Error>> {
+    fn args(&self, args: &mut Vec<u32>) -> Result<(), ProtocolError> {
         let bytes: [u8; 8] = self.to_le_bytes();
         let arr1: &[u8; 4] = bytes[0..4].try_into()?;
         let arr2: &[u8; 4] = bytes[4..8].try_into()?;
@@ -456,7 +477,7 @@ impl Incoming for u64 {
     }
 
     #[cfg(feature = "std")]
-    fn fill(&self, _: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), Box<dyn Error>> {
+    fn fill(&self, _: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), ProtocolError> {
         args.next()
             .ok_or_else(|| ProtocolError("args is end".to_string()))?;
         args.next()
@@ -487,7 +508,7 @@ impl Outcoming for u64 {
     }
 
     #[cfg(feature = "std")]
-    fn read(_: &[u8], args: &mut Iter<u32>) -> Result<Self, Box<dyn Error>> {
+    fn read(_: &[u8], args: &mut Iter<u32>) -> Result<Self, ProtocolError> {
         let el1: u32 = *args
             .next()
             .ok_or_else(|| ProtocolError("args is end".to_string()))?;
@@ -518,13 +539,13 @@ impl Incoming for usize {
     }
 
     #[cfg(feature = "std")]
-    fn args(&self, args: &mut Vec<u32>) -> Result<(), Box<dyn Error>> {
+    fn args(&self, args: &mut Vec<u32>) -> Result<(), ProtocolError> {
         args.push(*self as u32);
         Ok(())
     }
 
     #[cfg(feature = "std")]
-    fn fill(&self, _: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), Box<dyn Error>> {
+    fn fill(&self, _: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), ProtocolError> {
         args.next()
             .ok_or_else(|| ProtocolError("args is end".to_string()))?;
         Ok(())
@@ -545,7 +566,7 @@ impl Outcoming for usize {
     }
 
     #[cfg(feature = "std")]
-    fn read(_: &[u8], args: &mut Iter<u32>) -> Result<Self, Box<dyn Error>> {
+    fn read(_: &[u8], args: &mut Iter<u32>) -> Result<Self, ProtocolError> {
         let el: u32 = *args
             .next()
             .ok_or_else(|| ProtocolError("args is end".to_string()))?;
@@ -566,13 +587,13 @@ impl Incoming for isize {
     }
 
     #[cfg(feature = "std")]
-    fn args(&self, args: &mut Vec<u32>) -> Result<(), Box<dyn Error>> {
+    fn args(&self, args: &mut Vec<u32>) -> Result<(), ProtocolError> {
         args.push(*self as u32);
         Ok(())
     }
 
     #[cfg(feature = "std")]
-    fn fill(&self, _: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), Box<dyn Error>> {
+    fn fill(&self, _: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), ProtocolError> {
         args.next()
             .ok_or_else(|| ProtocolError("args is end".to_string()))?;
         Ok(())
@@ -592,7 +613,7 @@ impl Outcoming for isize {
     }
 
     #[cfg(feature = "std")]
-    fn read(_: &[u8], args: &mut Iter<u32>) -> Result<Self, Box<dyn Error>> {
+    fn read(_: &[u8], args: &mut Iter<u32>) -> Result<Self, ProtocolError> {
         let el: u32 = *args
             .next()
             .ok_or_else(|| ProtocolError("args is end".to_string()))?;
@@ -614,7 +635,7 @@ impl Incoming for f32 {
     }
 
     #[cfg(feature = "std")]
-    fn args(&self, args: &mut Vec<u32>) -> Result<(), Box<dyn Error>> {
+    fn args(&self, args: &mut Vec<u32>) -> Result<(), ProtocolError> {
         let bytes = self.to_le_bytes();
         let u = u32::from_le_bytes(bytes);
         args.push(u);
@@ -622,7 +643,7 @@ impl Incoming for f32 {
     }
 
     #[cfg(feature = "std")]
-    fn fill(&self, _: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), Box<dyn Error>> {
+    fn fill(&self, _: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), ProtocolError> {
         args.next()
             .ok_or_else(|| ProtocolError("args is end".to_string()))?;
         Ok(())
@@ -643,7 +664,7 @@ impl Outcoming for f32 {
     }
 
     #[cfg(feature = "std")]
-    fn read(_: &[u8], args: &mut Iter<u32>) -> Result<Self, Box<dyn Error>> {
+    fn read(_: &[u8], args: &mut Iter<u32>) -> Result<Self, ProtocolError> {
         let el: u32 = *args
             .next()
             .ok_or_else(|| ProtocolError("args is end".to_string()))?;
@@ -673,7 +694,7 @@ impl Incoming for f64 {
     }
 
     #[cfg(feature = "std")]
-    fn args(&self, args: &mut Vec<u32>) -> Result<(), Box<dyn Error>> {
+    fn args(&self, args: &mut Vec<u32>) -> Result<(), ProtocolError> {
         let bytes: [u8; 8] = self.to_le_bytes();
         let arr1: &[u8; 4] = bytes[0..4].try_into()?;
         let arr2: &[u8; 4] = bytes[4..8].try_into()?;
@@ -685,7 +706,7 @@ impl Incoming for f64 {
     }
 
     #[cfg(feature = "std")]
-    fn fill(&self, _: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), Box<dyn Error>> {
+    fn fill(&self, _: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), ProtocolError> {
         args.next()
             .ok_or_else(|| ProtocolError("args is end".to_string()))?;
         args.next()
@@ -716,7 +737,7 @@ impl Outcoming for f64 {
     }
 
     #[cfg(feature = "std")]
-    fn read(_: &[u8], args: &mut Iter<u32>) -> Result<Self, Box<dyn Error>> {
+    fn read(_: &[u8], args: &mut Iter<u32>) -> Result<Self, ProtocolError> {
         let el1: u32 = *args
             .next()
             .ok_or_else(|| ProtocolError("args is end".to_string()))?;
@@ -756,13 +777,13 @@ impl Incoming for String {
     }
 
     #[cfg(feature = "std")]
-    fn args(&self, args: &mut Vec<u32>) -> Result<(), Box<dyn Error>> {
+    fn args(&self, args: &mut Vec<u32>) -> Result<(), ProtocolError> {
         args.push(self.len() as u32);
         Ok(())
     }
 
     #[cfg(feature = "std")]
-    fn fill(&self, heap: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), Box<dyn Error>> {
+    fn fill(&self, heap: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), ProtocolError> {
         let ptr: usize = *args
             .next()
             .ok_or_else(|| ProtocolError("args is end".to_string()))?
@@ -785,7 +806,7 @@ impl Outcoming for String {
     }
 
     #[cfg(feature = "std")]
-    fn read(heap: &[u8], args: &mut Iter<u32>) -> Result<Self, Box<dyn Error>> {
+    fn read(heap: &[u8], args: &mut Iter<u32>) -> Result<Self, ProtocolError> {
         let len = *args
             .next()
             .ok_or_else(|| ProtocolError("args is end".to_string()))? as usize;
@@ -808,14 +829,14 @@ impl Incoming for Duration {
     }
 
     #[cfg(feature = "std")]
-    fn args(&self, args: &mut Vec<u32>) -> Result<(), Box<dyn Error>> {
+    fn args(&self, args: &mut Vec<u32>) -> Result<(), ProtocolError> {
         let e = self.num_milliseconds();
         e.args(args)?;
         Ok(())
     }
 
     #[cfg(feature = "std")]
-    fn fill(&self, _: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), Box<dyn Error>> {
+    fn fill(&self, _: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), ProtocolError> {
         args.next()
             .ok_or_else(|| ProtocolError("args is end".to_string()))?;
         args.next()
@@ -838,7 +859,7 @@ impl Outcoming for Duration {
     }
 
     #[cfg(feature = "std")]
-    fn read(heap: &[u8], args: &mut Iter<u32>) -> Result<Self, Box<dyn Error>> {
+    fn read(heap: &[u8], args: &mut Iter<u32>) -> Result<Self, ProtocolError> {
         let e = i64::read(heap, args)?;
         Ok(Duration::milliseconds(e))
     }
@@ -858,14 +879,14 @@ impl Incoming for DateTime<Utc> {
     }
 
     #[cfg(feature = "std")]
-    fn args(&self, args: &mut Vec<u32>) -> Result<(), Box<dyn Error>> {
+    fn args(&self, args: &mut Vec<u32>) -> Result<(), ProtocolError> {
         let secs = self.timestamp();
         secs.args(args)?;
         Ok(())
     }
 
     #[cfg(feature = "std")]
-    fn fill(&self, _: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), Box<dyn Error>> {
+    fn fill(&self, _: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), ProtocolError> {
         args.next()
             .ok_or_else(|| ProtocolError("args is end".to_string()))?;
         args.next()
@@ -888,7 +909,7 @@ impl Outcoming for DateTime<Utc> {
     }
 
     #[cfg(feature = "std")]
-    fn read(heap: &[u8], args: &mut Iter<u32>) -> Result<Self, Box<dyn Error>> {
+    fn read(heap: &[u8], args: &mut Iter<u32>) -> Result<Self, ProtocolError> {
         let secs = i64::read(heap, args)?;
         Ok(Self::from_utc(NaiveDateTime::from_timestamp(secs, 0), Utc))
     }
@@ -908,14 +929,14 @@ impl Incoming for Date<Utc> {
     }
 
     #[cfg(feature = "std")]
-    fn args(&self, args: &mut Vec<u32>) -> Result<(), Box<dyn Error>> {
+    fn args(&self, args: &mut Vec<u32>) -> Result<(), ProtocolError> {
         let days = self.num_days_from_ce();
         days.args(args)?;
         Ok(())
     }
 
     #[cfg(feature = "std")]
-    fn fill(&self, _: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), Box<dyn Error>> {
+    fn fill(&self, _: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), ProtocolError> {
         args.next()
             .ok_or_else(|| ProtocolError("args is end".to_string()))?;
         Ok(())
@@ -936,7 +957,7 @@ impl Outcoming for Date<Utc> {
     }
 
     #[cfg(feature = "std")]
-    fn read(heap: &[u8], args: &mut Iter<u32>) -> Result<Self, Box<dyn Error>> {
+    fn read(heap: &[u8], args: &mut Iter<u32>) -> Result<Self, ProtocolError> {
         let days = i32::read(heap, args)?;
         Ok(Self::from_utc(NaiveDate::from_num_days_from_ce(days), Utc))
     }
@@ -956,14 +977,14 @@ impl Incoming for time::Duration {
     }
 
     #[cfg(feature = "std")]
-    fn args(&self, args: &mut Vec<u32>) -> Result<(), Box<dyn Error>> {
+    fn args(&self, args: &mut Vec<u32>) -> Result<(), ProtocolError> {
         let e = self.whole_seconds();
         e.args(args)?;
         Ok(())
     }
 
     #[cfg(feature = "std")]
-    fn fill(&self, _: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), Box<dyn Error>> {
+    fn fill(&self, _: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), ProtocolError> {
         args.next()
             .ok_or_else(|| ProtocolError("args is end".to_string()))?;
         args.next()
@@ -986,7 +1007,7 @@ impl Outcoming for time::Duration {
     }
 
     #[cfg(feature = "std")]
-    fn read(heap: &[u8], args: &mut Iter<u32>) -> Result<Self, Box<dyn Error>> {
+    fn read(heap: &[u8], args: &mut Iter<u32>) -> Result<Self, ProtocolError> {
         let e = i64::read(heap, args)?;
         Ok(time::Duration::seconds(e))
     }
@@ -1009,14 +1030,14 @@ impl Incoming for time::OffsetDateTime {
     }
 
     #[cfg(feature = "std")]
-    fn args(&self, args: &mut Vec<u32>) -> Result<(), Box<dyn Error>> {
+    fn args(&self, args: &mut Vec<u32>) -> Result<(), ProtocolError> {
         let secs = self.unix_timestamp();
         secs.args(args)?;
         Ok(())
     }
 
     #[cfg(feature = "std")]
-    fn fill(&self, _: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), Box<dyn Error>> {
+    fn fill(&self, _: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), ProtocolError> {
         args.next()
             .ok_or_else(|| ProtocolError("args is end".to_string()))?;
         args.next()
@@ -1039,10 +1060,9 @@ impl Outcoming for time::OffsetDateTime {
     }
 
     #[cfg(feature = "std")]
-    fn read(heap: &[u8], args: &mut Iter<u32>) -> Result<Self, Box<dyn Error>> {
+    fn read(heap: &[u8], args: &mut Iter<u32>) -> Result<Self, ProtocolError> {
         let secs = i64::read(heap, args)?;
-        Self::from_unix_timestamp(secs)
-            .map_err(|_| ProtocolError::from("cannot read datetime").into())
+        Self::from_unix_timestamp(secs).map_err(|_| ProtocolError::from("cannot read datetime"))
     }
 
     fn is_need_read() -> bool {
@@ -1063,14 +1083,14 @@ impl Incoming for time::Date {
     }
 
     #[cfg(feature = "std")]
-    fn args(&self, args: &mut Vec<u32>) -> Result<(), Box<dyn Error>> {
+    fn args(&self, args: &mut Vec<u32>) -> Result<(), ProtocolError> {
         let days = self.to_julian_day();
         days.args(args)?;
         Ok(())
     }
 
     #[cfg(feature = "std")]
-    fn fill(&self, _: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), Box<dyn Error>> {
+    fn fill(&self, _: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), ProtocolError> {
         args.next()
             .ok_or_else(|| ProtocolError("args is end".to_string()))?;
         args.next()
@@ -1093,9 +1113,9 @@ impl Outcoming for time::Date {
     }
 
     #[cfg(feature = "std")]
-    fn read(heap: &[u8], args: &mut Iter<u32>) -> Result<Self, Box<dyn Error>> {
+    fn read(heap: &[u8], args: &mut Iter<u32>) -> Result<Self, ProtocolError> {
         let days = i32::read(heap, args)?;
-        Self::from_julian_day(days).map_err(|_| ProtocolError::from("cannot read datetime").into())
+        Self::from_julian_day(days).map_err(|_| ProtocolError::from("cannot read datetime"))
     }
 
     fn is_need_read() -> bool {
@@ -1136,14 +1156,14 @@ impl Incoming for time::Time {
     }
 
     #[cfg(feature = "std")]
-    fn args(&self, args: &mut Vec<u32>) -> Result<(), Box<dyn Error>> {
+    fn args(&self, args: &mut Vec<u32>) -> Result<(), ProtocolError> {
         let u = time_into_u32(self);
         u.args(args)?;
         Ok(())
     }
 
     #[cfg(feature = "std")]
-    fn fill(&self, _: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), Box<dyn Error>> {
+    fn fill(&self, _: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), ProtocolError> {
         args.next()
             .ok_or_else(|| ProtocolError("args is end".to_string()))?;
         Ok(())
@@ -1164,7 +1184,7 @@ impl Outcoming for time::Time {
     }
 
     #[cfg(feature = "std")]
-    fn read(heap: &[u8], args: &mut Iter<u32>) -> Result<Self, Box<dyn Error>> {
+    fn read(heap: &[u8], args: &mut Iter<u32>) -> Result<Self, ProtocolError> {
         let u = u32::read(heap, args)?;
         let time = time_from_u32(u)?;
         Ok(time)
@@ -1211,7 +1231,7 @@ impl Incoming for Bytes {
     }
 
     #[cfg(feature = "std")]
-    fn args(&self, args: &mut Vec<u32>) -> Result<(), Box<dyn Error>> {
+    fn args(&self, args: &mut Vec<u32>) -> Result<(), ProtocolError> {
         let len = self.0.len();
         args.push(len as u32);
 
@@ -1259,7 +1279,7 @@ impl Incoming for Bytes {
     }
 
     #[cfg(feature = "std")]
-    fn fill(&self, _: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), Box<dyn Error>> {
+    fn fill(&self, _: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), ProtocolError> {
         args.next()
             .ok_or_else(|| ProtocolError("args is end".to_string()))?; // len
         let len = self.0.len();
@@ -1323,7 +1343,7 @@ impl Outcoming for Bytes {
 
     // TODO: https://stackoverflow.com/questions/49690459/converting-a-vecu32-to-vecu8-in-place-and-with-minimal-overhead
     #[cfg(feature = "std")]
-    fn read(_: &[u8], args: &mut Iter<u32>) -> Result<Self, Box<dyn Error>> {
+    fn read(_: &[u8], args: &mut Iter<u32>) -> Result<Self, ProtocolError> {
         let len = *args
             .next()
             .ok_or_else(|| ProtocolError("args is end".to_string()))? as usize;
@@ -1381,7 +1401,7 @@ impl<T: Incoming> Incoming for Vec<T> {
     }
 
     #[cfg(feature = "std")]
-    fn args(&self, args: &mut Vec<u32>) -> Result<(), Box<dyn Error>> {
+    fn args(&self, args: &mut Vec<u32>) -> Result<(), ProtocolError> {
         let len = self.len();
         args.push(len as u32);
         for item in self {
@@ -1391,7 +1411,7 @@ impl<T: Incoming> Incoming for Vec<T> {
     }
 
     #[cfg(feature = "std")]
-    fn fill(&self, heap: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), Box<dyn Error>> {
+    fn fill(&self, heap: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), ProtocolError> {
         args.next()
             .ok_or_else(|| ProtocolError("args is end".to_string()))?; // len
         for item in self {
@@ -1417,7 +1437,7 @@ impl<T: Outcoming> Outcoming for Vec<T> {
     }
 
     #[cfg(feature = "std")]
-    fn read(heap: &[u8], args: &mut Iter<u32>) -> Result<Self, Box<dyn Error>> {
+    fn read(heap: &[u8], args: &mut Iter<u32>) -> Result<Self, ProtocolError> {
         let len = *args
             .next()
             .ok_or_else(|| ProtocolError("args is end".to_string()))? as usize;
@@ -1450,7 +1470,7 @@ impl<T: Incoming> Incoming for Option<T> {
     }
 
     #[cfg(feature = "std")]
-    fn args(&self, args: &mut Vec<u32>) -> Result<(), Box<dyn Error>> {
+    fn args(&self, args: &mut Vec<u32>) -> Result<(), ProtocolError> {
         match self {
             None => {
                 args.push(0);
@@ -1464,7 +1484,7 @@ impl<T: Incoming> Incoming for Option<T> {
     }
 
     #[cfg(feature = "std")]
-    fn fill(&self, heap: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), Box<dyn Error>> {
+    fn fill(&self, heap: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), ProtocolError> {
         args.next()
             .ok_or_else(|| ProtocolError("args is end".to_string()))?;
         if let Some(item) = self {
@@ -1494,7 +1514,7 @@ impl<T: Outcoming> Outcoming for Option<T> {
     }
 
     #[cfg(feature = "std")]
-    fn read(heap: &[u8], args: &mut Iter<u32>) -> Result<Self, Box<dyn Error>> {
+    fn read(heap: &[u8], args: &mut Iter<u32>) -> Result<Self, ProtocolError> {
         let is_some = *args
             .next()
             .ok_or_else(|| ProtocolError("args is end".to_string()))?
@@ -1531,7 +1551,7 @@ where
     }
 
     #[cfg(feature = "std")]
-    fn args(&self, args: &mut Vec<u32>) -> Result<(), Box<dyn Error>> {
+    fn args(&self, args: &mut Vec<u32>) -> Result<(), ProtocolError> {
         let len = self.len();
         args.push(len as u32);
         for (key, value) in self {
@@ -1542,7 +1562,7 @@ where
     }
 
     #[cfg(feature = "std")]
-    fn fill(&self, heap: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), Box<dyn Error>> {
+    fn fill(&self, heap: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), ProtocolError> {
         args.next()
             .ok_or_else(|| ProtocolError("args is end".to_string()))?; // len
         for (key, value) in self {
@@ -1574,7 +1594,7 @@ where
     }
 
     #[cfg(feature = "std")]
-    fn read(heap: &[u8], args: &mut Iter<u32>) -> Result<Self, Box<dyn Error>> {
+    fn read(heap: &[u8], args: &mut Iter<u32>) -> Result<Self, ProtocolError> {
         let len = *args
             .next()
             .ok_or_else(|| ProtocolError("args is end".to_string()))? as usize;
@@ -1611,7 +1631,7 @@ where
     }
 
     #[cfg(feature = "std")]
-    fn args(&self, args: &mut Vec<u32>) -> Result<(), Box<dyn Error>> {
+    fn args(&self, args: &mut Vec<u32>) -> Result<(), ProtocolError> {
         let len = self.len();
         args.push(len as u32);
         for (key, value) in self {
@@ -1622,7 +1642,7 @@ where
     }
 
     #[cfg(feature = "std")]
-    fn fill(&self, heap: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), Box<dyn Error>> {
+    fn fill(&self, heap: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), ProtocolError> {
         args.next()
             .ok_or_else(|| ProtocolError("args is end".to_string()))?; // len
         for (key, value) in self {
@@ -1653,7 +1673,7 @@ where
     }
 
     #[cfg(feature = "std")]
-    fn read(heap: &[u8], args: &mut Iter<u32>) -> Result<Self, Box<dyn Error>> {
+    fn read(heap: &[u8], args: &mut Iter<u32>) -> Result<Self, ProtocolError> {
         let len = *args
             .next()
             .ok_or_else(|| ProtocolError("args is end".to_string()))? as usize;
@@ -1692,7 +1712,7 @@ where
     }
 
     #[cfg(feature = "std")]
-    fn args(&self, args: &mut Vec<u32>) -> Result<(), Box<dyn Error>> {
+    fn args(&self, args: &mut Vec<u32>) -> Result<(), ProtocolError> {
         let len = self.len();
         args.push(len as u32);
         for (key, value) in self {
@@ -1703,7 +1723,7 @@ where
     }
 
     #[cfg(feature = "std")]
-    fn fill(&self, heap: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), Box<dyn Error>> {
+    fn fill(&self, heap: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), ProtocolError> {
         args.next()
             .ok_or_else(|| ProtocolError("args is end".to_string()))?;
         for (key, value) in self {
@@ -1735,7 +1755,7 @@ where
     }
 
     #[cfg(feature = "std")]
-    fn read(heap: &[u8], args: &mut Iter<u32>) -> Result<Self, Box<dyn Error>> {
+    fn read(heap: &[u8], args: &mut Iter<u32>) -> Result<Self, ProtocolError> {
         let len = *args
             .next()
             .ok_or_else(|| ProtocolError("args is end".to_string()))? as usize;
@@ -1764,14 +1784,14 @@ impl<T1: Incoming, T2: Incoming> Incoming for (T1, T2) {
     }
 
     #[cfg(feature = "std")]
-    fn args(&self, args: &mut Vec<u32>) -> Result<(), Box<dyn Error>> {
+    fn args(&self, args: &mut Vec<u32>) -> Result<(), ProtocolError> {
         self.0.args(args)?;
         self.1.args(args)?;
         Ok(())
     }
 
     #[cfg(feature = "std")]
-    fn fill(&self, heap: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), Box<dyn Error>> {
+    fn fill(&self, heap: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), ProtocolError> {
         self.0.fill(heap, args)?;
         self.1.fill(heap, args)?;
         Ok(())
@@ -1791,7 +1811,7 @@ impl<T1: Outcoming, T2: Outcoming> Outcoming for (T1, T2) {
     }
 
     #[cfg(feature = "std")]
-    fn read(heap: &[u8], args: &mut Iter<u32>) -> Result<Self, Box<dyn Error>> {
+    fn read(heap: &[u8], args: &mut Iter<u32>) -> Result<Self, ProtocolError> {
         let t1 = T1::read(heap, args)?;
         let t2 = T2::read(heap, args)?;
         Ok((t1, t2))
@@ -1812,7 +1832,7 @@ impl<T1: Incoming, T2: Incoming, T3: Incoming> Incoming for (T1, T2, T3) {
     }
 
     #[cfg(feature = "std")]
-    fn args(&self, args: &mut Vec<u32>) -> Result<(), Box<dyn Error>> {
+    fn args(&self, args: &mut Vec<u32>) -> Result<(), ProtocolError> {
         self.0.args(args)?;
         self.1.args(args)?;
         self.2.args(args)?;
@@ -1820,7 +1840,7 @@ impl<T1: Incoming, T2: Incoming, T3: Incoming> Incoming for (T1, T2, T3) {
     }
 
     #[cfg(feature = "std")]
-    fn fill(&self, heap: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), Box<dyn Error>> {
+    fn fill(&self, heap: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), ProtocolError> {
         self.0.fill(heap, args)?;
         self.1.fill(heap, args)?;
         self.2.fill(heap, args)?;
@@ -1842,7 +1862,7 @@ impl<T1: Outcoming, T2: Outcoming, T3: Outcoming> Outcoming for (T1, T2, T3) {
     }
 
     #[cfg(feature = "std")]
-    fn read(heap: &[u8], args: &mut Iter<u32>) -> Result<Self, Box<dyn Error>> {
+    fn read(heap: &[u8], args: &mut Iter<u32>) -> Result<Self, ProtocolError> {
         let t1 = T1::read(heap, args)?;
         let t2 = T2::read(heap, args)?;
         let t3 = T3::read(heap, args)?;
@@ -1865,7 +1885,7 @@ impl<T1: Incoming, T2: Incoming, T3: Incoming, T4: Incoming> Incoming for (T1, T
     }
 
     #[cfg(feature = "std")]
-    fn args(&self, args: &mut Vec<u32>) -> Result<(), Box<dyn Error>> {
+    fn args(&self, args: &mut Vec<u32>) -> Result<(), ProtocolError> {
         self.0.args(args)?;
         self.1.args(args)?;
         self.2.args(args)?;
@@ -1874,7 +1894,7 @@ impl<T1: Incoming, T2: Incoming, T3: Incoming, T4: Incoming> Incoming for (T1, T
     }
 
     #[cfg(feature = "std")]
-    fn fill(&self, heap: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), Box<dyn Error>> {
+    fn fill(&self, heap: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), ProtocolError> {
         self.0.fill(heap, args)?;
         self.1.fill(heap, args)?;
         self.2.fill(heap, args)?;
@@ -1901,7 +1921,7 @@ impl<T1: Outcoming, T2: Outcoming, T3: Outcoming, T4: Outcoming> Outcoming for (
     }
 
     #[cfg(feature = "std")]
-    fn read(heap: &[u8], args: &mut Iter<u32>) -> Result<Self, Box<dyn Error>> {
+    fn read(heap: &[u8], args: &mut Iter<u32>) -> Result<Self, ProtocolError> {
         let t1 = T1::read(heap, args)?;
         let t2 = T2::read(heap, args)?;
         let t3 = T3::read(heap, args)?;
@@ -1922,13 +1942,13 @@ impl<T: Incoming> Incoming for Box<T> {
     }
 
     #[cfg(feature = "std")]
-    fn args(&self, args: &mut Vec<u32>) -> Result<(), Box<dyn Error>> {
+    fn args(&self, args: &mut Vec<u32>) -> Result<(), ProtocolError> {
         self.as_ref().args(args)?;
         Ok(())
     }
 
     #[cfg(feature = "std")]
-    fn fill(&self, heap: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), Box<dyn Error>> {
+    fn fill(&self, heap: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), ProtocolError> {
         self.as_ref().fill(heap, args)?;
         Ok(())
     }
@@ -1946,7 +1966,7 @@ impl<T: Outcoming> Outcoming for Box<T> {
     }
 
     #[cfg(feature = "std")]
-    fn read(heap: &[u8], args: &mut Iter<u32>) -> Result<Self, Box<dyn Error>> {
+    fn read(heap: &[u8], args: &mut Iter<u32>) -> Result<Self, ProtocolError> {
         let t = T::read(heap, args)?;
         Ok(Box::new(t))
     }
