@@ -7,11 +7,11 @@ extern crate alloc;
 mod protocol;
 
 #[cfg(all(any(feature = "hashmap", feature = "std"), feature = "map"))]
-use rustc_hash::{FxHasher};
-#[cfg(all(any(feature = "hashmap", feature = "std"), feature = "map"))]
 use core::hash::BuildHasherDefault;
 #[cfg(all(not(feature = "std"), feature = "hashmap"))]
 use hashbrown::HashMap;
+#[cfg(all(any(feature = "hashmap", feature = "std"), feature = "map"))]
+use rustc_hash::FxHasher;
 #[cfg(feature = "std")]
 use std::collections::HashMap;
 
@@ -37,7 +37,7 @@ enum Primitive {
     C,
 }
 ```
-PrimitiveEnum should be equivalete for Complex, but without variants inner data
+PrimitiveEnum should be equivalent for Complex, but without variants inner data
 */
 pub trait PrimitiveFromEnum {
     type PrimitiveEnum;
