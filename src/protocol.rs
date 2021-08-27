@@ -124,6 +124,13 @@ Incoming trait (Deserializable) - (Входящее сообщение) если
 // #[cfg(all(target = "wasm32-unknown-unknown"))]
 pub trait Incoming {
     /**
+    Указывает на то что необходимо инициализировать данные, а затем заполнить
+    если true - получается 2 шага
+    если false - 1 шаг
+     */
+    const IS_NEED_INIT_FILL: bool = false;
+
+    /**
     Инициализируем кусок памяти в wasm для последующего заполнения.
     Вызывается в wasm.
     */
@@ -148,15 +155,6 @@ pub trait Incoming {
     */
     #[cfg(feature = "std")]
     fn fill(&self, heap: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), ProtocolError>;
-
-    /**
-    Функиця указывает на то что необходимо инициализировать даные, а затем заполнить
-    если true - получается 2 шага
-    если false - 1 шаг
-    */
-    fn is_need_init_fill() -> bool {
-        true
-    }
 }
 
 /**
@@ -167,6 +165,11 @@ Outcoming trait (Serializable) - (Исходящее сообщение) есл�
 Для сериализации и десериализации в БД рекомендуется использовать serde.
 */
 pub trait Outcoming {
+    /**
+    Указывает на то что необходимо прочитать данные из памяти песочницы
+     */
+    const IS_NEED_READ: bool = false;
+
     /**
     Заполнение массива чисел вспомогательными данными,
     такими как длина строки или массива и др.
@@ -183,13 +186,6 @@ pub trait Outcoming {
     fn read(heap: &[u8], args: &mut Iter<u32>) -> Result<Self, ProtocolError>
     where
         Self: Sized;
-
-    /**
-    Функиця указывает на то что необходимо прочитать данные из памяти песочницы
-    */
-    fn is_need_read() -> bool {
-        true
-    }
 }
 
 impl Incoming for bool {
@@ -211,10 +207,6 @@ impl Incoming for bool {
             .ok_or_else(|| ProtocolError("args is end".to_string()))?;
         Ok(())
     }
-
-    fn is_need_init_fill() -> bool {
-        false
-    }
 }
 
 impl Outcoming for bool {
@@ -230,10 +222,6 @@ impl Outcoming for bool {
             .next()
             .ok_or_else(|| ProtocolError("args is end".to_string()))?;
         Ok(el != 0)
-    }
-
-    fn is_need_read() -> bool {
-        false
     }
 }
 
@@ -256,10 +244,6 @@ impl Incoming for u8 {
             .ok_or_else(|| ProtocolError("args is end".to_string()))?;
         Ok(())
     }
-
-    fn is_need_init_fill() -> bool {
-        false
-    }
 }
 
 impl Outcoming for u8 {
@@ -275,10 +259,6 @@ impl Outcoming for u8 {
             .next()
             .ok_or_else(|| ProtocolError("args is end".to_string()))?;
         Ok(el as u8)
-    }
-
-    fn is_need_read() -> bool {
-        false
     }
 }
 
@@ -301,10 +281,6 @@ impl Incoming for i32 {
             .ok_or_else(|| ProtocolError("args is end".to_string()))?;
         Ok(())
     }
-
-    fn is_need_init_fill() -> bool {
-        false
-    }
 }
 
 impl Outcoming for i32 {
@@ -319,10 +295,6 @@ impl Outcoming for i32 {
         Ok(*args
             .next()
             .ok_or_else(|| ProtocolError("args is end".to_string()))? as i32)
-    }
-
-    fn is_need_read() -> bool {
-        false
     }
 }
 
@@ -361,10 +333,6 @@ impl Incoming for i64 {
             .ok_or_else(|| ProtocolError("args is end".to_string()))?;
         Ok(())
     }
-
-    fn is_need_init_fill() -> bool {
-        false
-    }
 }
 
 impl Outcoming for i64 {
@@ -399,10 +367,6 @@ impl Outcoming for i64 {
         let e = i64::from_le_bytes(*d);
         Ok(e)
     }
-
-    fn is_need_read() -> bool {
-        false
-    }
 }
 
 impl Incoming for u32 {
@@ -424,10 +388,6 @@ impl Incoming for u32 {
             .ok_or_else(|| ProtocolError("args is end".to_string()))?;
         Ok(())
     }
-
-    fn is_need_init_fill() -> bool {
-        false
-    }
 }
 
 impl Outcoming for u32 {
@@ -442,10 +402,6 @@ impl Outcoming for u32 {
         Ok(*args
             .next()
             .ok_or_else(|| ProtocolError("args is end".to_string()))?)
-    }
-
-    fn is_need_read() -> bool {
-        false
     }
 }
 
@@ -484,10 +440,6 @@ impl Incoming for u64 {
             .ok_or_else(|| ProtocolError("args is end".to_string()))?;
         Ok(())
     }
-
-    fn is_need_init_fill() -> bool {
-        false
-    }
 }
 
 impl Outcoming for u64 {
@@ -522,10 +474,6 @@ impl Outcoming for u64 {
         let e = u64::from_le_bytes(*d);
         Ok(e)
     }
-
-    fn is_need_read() -> bool {
-        false
-    }
 }
 
 // only for wasm32 and runner target_pointer_width = "32"
@@ -550,10 +498,6 @@ impl Incoming for usize {
             .ok_or_else(|| ProtocolError("args is end".to_string()))?;
         Ok(())
     }
-
-    fn is_need_init_fill() -> bool {
-        false
-    }
 }
 
 // only for wasm32 and runner target_pointer_width = "32"
@@ -571,10 +515,6 @@ impl Outcoming for usize {
             .next()
             .ok_or_else(|| ProtocolError("args is end".to_string()))?;
         Ok(el as usize)
-    }
-
-    fn is_need_read() -> bool {
-        false
     }
 }
 
@@ -598,10 +538,6 @@ impl Incoming for isize {
             .ok_or_else(|| ProtocolError("args is end".to_string()))?;
         Ok(())
     }
-
-    fn is_need_init_fill() -> bool {
-        false
-    }
 }
 
 // only for wasm32 and runner target_pointer_width = "32"
@@ -618,10 +554,6 @@ impl Outcoming for isize {
             .next()
             .ok_or_else(|| ProtocolError("args is end".to_string()))?;
         Ok(el as isize)
-    }
-
-    fn is_need_read() -> bool {
-        false
     }
 }
 
@@ -648,10 +580,6 @@ impl Incoming for f32 {
             .ok_or_else(|| ProtocolError("args is end".to_string()))?;
         Ok(())
     }
-
-    fn is_need_init_fill() -> bool {
-        false
-    }
 }
 
 impl Outcoming for f32 {
@@ -671,10 +599,6 @@ impl Outcoming for f32 {
         let bytes: [u8; 4] = el.to_le_bytes();
         let f = f32::from_le_bytes(bytes);
         Ok(f)
-    }
-
-    fn is_need_read() -> bool {
-        false
     }
 }
 
@@ -713,10 +637,6 @@ impl Incoming for f64 {
             .ok_or_else(|| ProtocolError("args is end".to_string()))?;
         Ok(())
     }
-
-    fn is_need_init_fill() -> bool {
-        false
-    }
 }
 
 impl Outcoming for f64 {
@@ -750,10 +670,6 @@ impl Outcoming for f64 {
         let d: &[u8; 8] = &c[..].try_into()?;
         let e = f64::from_le_bytes(*d);
         Ok(e)
-    }
-
-    fn is_need_read() -> bool {
-        false
     }
 }
 
@@ -843,10 +759,6 @@ impl Incoming for Duration {
             .ok_or_else(|| ProtocolError("args is end".to_string()))?;
         Ok(())
     }
-
-    fn is_need_init_fill() -> bool {
-        false
-    }
 }
 
 #[cfg(feature = "chrono")]
@@ -862,10 +774,6 @@ impl Outcoming for Duration {
     fn read(heap: &[u8], args: &mut Iter<u32>) -> Result<Self, ProtocolError> {
         let e = i64::read(heap, args)?;
         Ok(Duration::milliseconds(e))
-    }
-
-    fn is_need_read() -> bool {
-        false
     }
 }
 
@@ -893,10 +801,6 @@ impl Incoming for DateTime<Utc> {
             .ok_or_else(|| ProtocolError("args is end".to_string()))?;
         Ok(())
     }
-
-    fn is_need_init_fill() -> bool {
-        false
-    }
 }
 
 #[cfg(feature = "chrono")]
@@ -912,10 +816,6 @@ impl Outcoming for DateTime<Utc> {
     fn read(heap: &[u8], args: &mut Iter<u32>) -> Result<Self, ProtocolError> {
         let secs = i64::read(heap, args)?;
         Ok(Self::from_utc(NaiveDateTime::from_timestamp(secs, 0), Utc))
-    }
-
-    fn is_need_read() -> bool {
-        false
     }
 }
 
@@ -941,10 +841,6 @@ impl Incoming for Date<Utc> {
             .ok_or_else(|| ProtocolError("args is end".to_string()))?;
         Ok(())
     }
-
-    fn is_need_init_fill() -> bool {
-        false
-    }
 }
 
 #[cfg(feature = "chrono")]
@@ -960,10 +856,6 @@ impl Outcoming for Date<Utc> {
     fn read(heap: &[u8], args: &mut Iter<u32>) -> Result<Self, ProtocolError> {
         let days = i32::read(heap, args)?;
         Ok(Self::from_utc(NaiveDate::from_num_days_from_ce(days), Utc))
-    }
-
-    fn is_need_read() -> bool {
-        false
     }
 }
 
@@ -991,10 +883,6 @@ impl Incoming for time::Duration {
             .ok_or_else(|| ProtocolError("args is end".to_string()))?;
         Ok(())
     }
-
-    fn is_need_init_fill() -> bool {
-        false
-    }
 }
 
 #[cfg(feature = "time")]
@@ -1010,10 +898,6 @@ impl Outcoming for time::Duration {
     fn read(heap: &[u8], args: &mut Iter<u32>) -> Result<Self, ProtocolError> {
         let e = i64::read(heap, args)?;
         Ok(time::Duration::seconds(e))
-    }
-
-    fn is_need_read() -> bool {
-        false
     }
 }
 
@@ -1044,10 +928,6 @@ impl Incoming for time::OffsetDateTime {
             .ok_or_else(|| ProtocolError("args is end".to_string()))?;
         Ok(())
     }
-
-    fn is_need_init_fill() -> bool {
-        false
-    }
 }
 
 #[cfg(feature = "time")]
@@ -1063,10 +943,6 @@ impl Outcoming for time::OffsetDateTime {
     fn read(heap: &[u8], args: &mut Iter<u32>) -> Result<Self, ProtocolError> {
         let secs = i64::read(heap, args)?;
         Self::from_unix_timestamp(secs).map_err(|_| ProtocolError::from("cannot read datetime"))
-    }
-
-    fn is_need_read() -> bool {
-        false
     }
 }
 
@@ -1097,10 +973,6 @@ impl Incoming for time::Date {
             .ok_or_else(|| ProtocolError("args is end".to_string()))?;
         Ok(())
     }
-
-    fn is_need_init_fill() -> bool {
-        false
-    }
 }
 
 #[cfg(feature = "time")]
@@ -1116,10 +988,6 @@ impl Outcoming for time::Date {
     fn read(heap: &[u8], args: &mut Iter<u32>) -> Result<Self, ProtocolError> {
         let days = i32::read(heap, args)?;
         Self::from_julian_day(days).map_err(|_| ProtocolError::from("cannot read datetime"))
-    }
-
-    fn is_need_read() -> bool {
-        false
     }
 }
 
@@ -1168,10 +1036,6 @@ impl Incoming for time::Time {
             .ok_or_else(|| ProtocolError("args is end".to_string()))?;
         Ok(())
     }
-
-    fn is_need_init_fill() -> bool {
-        false
-    }
 }
 
 #[cfg(feature = "time")]
@@ -1188,10 +1052,6 @@ impl Outcoming for time::Time {
         let u = u32::read(heap, args)?;
         let time = time_from_u32(u)?;
         Ok(time)
-    }
-
-    fn is_need_read() -> bool {
-        false
     }
 }
 
@@ -1294,10 +1154,6 @@ impl Incoming for Bytes {
         }
         Ok(())
     }
-
-    fn is_need_init_fill() -> bool {
-        false
-    }
 }
 
 // TODO: for wasm64 other logic
@@ -1378,13 +1234,11 @@ impl Outcoming for Bytes {
 
         Ok(Bytes(vec))
     }
-
-    fn is_need_read() -> bool {
-        false
-    }
 }
 
 impl<T: Incoming> Incoming for Vec<T> {
+    const IS_NEED_INIT_FILL: bool = T::IS_NEED_INIT_FILL;
+
     #[cfg(not(feature = "std"))]
     fn init(args: &mut IterMut<u32>) -> Result<(u32, Self), ProtocolError> {
         let arg = args.next().ok_or(ProtocolError(ARGS_NEXT_ERROR))?;
@@ -1419,13 +1273,11 @@ impl<T: Incoming> Incoming for Vec<T> {
         }
         Ok(())
     }
-
-    fn is_need_init_fill() -> bool {
-        T::is_need_init_fill()
-    }
 }
 
 impl<T: Outcoming> Outcoming for Vec<T> {
+    const IS_NEED_READ: bool = T::IS_NEED_READ;
+
     #[cfg(not(feature = "std"))]
     fn args(&self, args: &mut Vec<u32>) -> Result<(), ProtocolError> {
         let len = self.len() as u32;
@@ -1449,13 +1301,11 @@ impl<T: Outcoming> Outcoming for Vec<T> {
         }
         Ok(vec)
     }
-
-    fn is_need_read() -> bool {
-        T::is_need_read()
-    }
 }
 
 impl<T: Incoming> Incoming for Option<T> {
+    const IS_NEED_INIT_FILL: bool = T::IS_NEED_INIT_FILL;
+
     #[cfg(not(feature = "std"))]
     fn init(args: &mut IterMut<u32>) -> Result<(u32, Self), ProtocolError> {
         let is_some: bool = *args.next().ok_or(ProtocolError(ARGS_NEXT_ERROR))? != 0;
@@ -1492,13 +1342,11 @@ impl<T: Incoming> Incoming for Option<T> {
         }
         Ok(())
     }
-
-    fn is_need_init_fill() -> bool {
-        T::is_need_init_fill()
-    }
 }
 
 impl<T: Outcoming> Outcoming for Option<T> {
+    const IS_NEED_READ: bool = T::IS_NEED_READ;
+
     #[cfg(not(feature = "std"))]
     fn args(&self, args: &mut Vec<u32>) -> Result<(), ProtocolError> {
         match self {
@@ -1526,10 +1374,6 @@ impl<T: Outcoming> Outcoming for Option<T> {
             Ok(Some(T::read(heap, args)?))
         }
     }
-
-    fn is_need_read() -> bool {
-        T::is_need_read()
-    }
 }
 
 #[cfg(any(feature = "std", feature = "hashmap"))]
@@ -1537,6 +1381,8 @@ impl<K: Incoming, V: Incoming> Incoming for HashMap<K, V>
 where
     K: Eq + Hash,
 {
+    const IS_NEED_INIT_FILL: bool = K::IS_NEED_INIT_FILL || V::IS_NEED_INIT_FILL;
+
     #[cfg(not(feature = "std"))]
     fn init(args: &mut IterMut<u32>) -> Result<(u32, Self), ProtocolError> {
         let len = *args.next().ok_or(ProtocolError(ARGS_NEXT_ERROR))? as usize;
@@ -1571,10 +1417,6 @@ where
         }
         Ok(())
     }
-
-    fn is_need_init_fill() -> bool {
-        K::is_need_init_fill() || V::is_need_init_fill()
-    }
 }
 
 #[cfg(any(feature = "std", feature = "hashmap"))]
@@ -1582,6 +1424,8 @@ impl<K: Outcoming, V: Outcoming> Outcoming for HashMap<K, V>
 where
     K: Eq + Hash,
 {
+    const IS_NEED_READ: bool = K::IS_NEED_READ || V::IS_NEED_READ;
+
     #[cfg(not(feature = "std"))]
     fn args(&self, args: &mut Vec<u32>) -> Result<(), ProtocolError> {
         let len = self.len() as u32;
@@ -1607,16 +1451,14 @@ where
         }
         Ok(map)
     }
-
-    fn is_need_read() -> bool {
-        K::is_need_read() || V::is_need_read()
-    }
 }
 
 impl<K: Incoming, V: Incoming> Incoming for BTreeMap<K, V>
 where
     K: Ord,
 {
+    const IS_NEED_INIT_FILL: bool = K::IS_NEED_INIT_FILL || V::IS_NEED_INIT_FILL;
+
     #[cfg(not(feature = "std"))]
     fn init(args: &mut IterMut<u32>) -> Result<(u32, Self), ProtocolError> {
         let len = *args.next().ok_or(ProtocolError(ARGS_NEXT_ERROR))? as usize;
@@ -1651,16 +1493,14 @@ where
         }
         Ok(())
     }
-
-    fn is_need_init_fill() -> bool {
-        K::is_need_init_fill() || V::is_need_init_fill()
-    }
 }
 
 impl<K: Outcoming, V: Outcoming> Outcoming for BTreeMap<K, V>
 where
     K: Ord,
 {
+    const IS_NEED_READ: bool = K::IS_NEED_READ || V::IS_NEED_READ;
+
     #[cfg(not(feature = "std"))]
     fn args(&self, args: &mut Vec<u32>) -> Result<(), ProtocolError> {
         let len = self.len() as u32;
@@ -1686,10 +1526,6 @@ where
         }
         Ok(map)
     }
-
-    fn is_need_read() -> bool {
-        K::is_need_read() || V::is_need_read()
-    }
 }
 
 #[cfg(all(any(feature = "hashmap", feature = "std"), feature = "map"))]
@@ -1697,6 +1533,8 @@ impl<K: Incoming, V: Incoming> Incoming for FxHashMap<K, V>
 where
     K: Eq + Hash,
 {
+    const IS_NEED_INIT_FILL: bool = K::IS_NEED_INIT_FILL || V::IS_NEED_INIT_FILL;
+
     #[cfg(not(feature = "std"))]
     fn init(args: &mut IterMut<u32>) -> Result<(u32, Self), ProtocolError> {
         let len = *args.next().ok_or(ProtocolError(ARGS_NEXT_ERROR))? as usize;
@@ -1732,10 +1570,6 @@ where
         }
         Ok(())
     }
-
-    fn is_need_init_fill() -> bool {
-        K::is_need_init_fill() || V::is_need_init_fill()
-    }
 }
 
 #[cfg(all(any(feature = "hashmap", feature = "std"), feature = "map"))]
@@ -1743,6 +1577,8 @@ impl<K: Outcoming, V: Outcoming> Outcoming for FxHashMap<K, V>
 where
     K: Eq + Hash,
 {
+    const IS_NEED_READ: bool = K::IS_NEED_READ || V::IS_NEED_READ;
+
     #[cfg(not(feature = "std"))]
     fn args(&self, args: &mut Vec<u32>) -> Result<(), ProtocolError> {
         let len = self.len() as u32;
@@ -1769,13 +1605,11 @@ where
         }
         Ok(map)
     }
-
-    fn is_need_read() -> bool {
-        K::is_need_read() || V::is_need_read()
-    }
 }
 
 impl<T1: Incoming, T2: Incoming> Incoming for (T1, T2) {
+    const IS_NEED_INIT_FILL: bool = T1::IS_NEED_INIT_FILL || T2::IS_NEED_INIT_FILL;
+
     #[cfg(not(feature = "std"))]
     fn init(args: &mut IterMut<u32>) -> Result<(u32, Self), ProtocolError> {
         let (_, t1) = T1::init(args)?;
@@ -1796,13 +1630,11 @@ impl<T1: Incoming, T2: Incoming> Incoming for (T1, T2) {
         self.1.fill(heap, args)?;
         Ok(())
     }
-
-    fn is_need_init_fill() -> bool {
-        T1::is_need_init_fill() || T2::is_need_init_fill()
-    }
 }
 
 impl<T1: Outcoming, T2: Outcoming> Outcoming for (T1, T2) {
+    const IS_NEED_READ: bool = T1::IS_NEED_READ || T2::IS_NEED_READ;
+
     #[cfg(not(feature = "std"))]
     fn args(&self, args: &mut Vec<u32>) -> Result<(), ProtocolError> {
         self.0.args(args)?;
@@ -1816,13 +1648,12 @@ impl<T1: Outcoming, T2: Outcoming> Outcoming for (T1, T2) {
         let t2 = T2::read(heap, args)?;
         Ok((t1, t2))
     }
-
-    fn is_need_read() -> bool {
-        T1::is_need_read() || T2::is_need_read()
-    }
 }
 
 impl<T1: Incoming, T2: Incoming, T3: Incoming> Incoming for (T1, T2, T3) {
+    const IS_NEED_INIT_FILL: bool =
+        T1::IS_NEED_INIT_FILL || T2::IS_NEED_INIT_FILL || T3::IS_NEED_INIT_FILL;
+
     #[cfg(not(feature = "std"))]
     fn init(args: &mut IterMut<u32>) -> Result<(u32, Self), ProtocolError> {
         let (_, t1) = T1::init(args)?;
@@ -1846,13 +1677,11 @@ impl<T1: Incoming, T2: Incoming, T3: Incoming> Incoming for (T1, T2, T3) {
         self.2.fill(heap, args)?;
         Ok(())
     }
-
-    fn is_need_init_fill() -> bool {
-        T1::is_need_init_fill() || T2::is_need_init_fill() || T3::is_need_init_fill()
-    }
 }
 
 impl<T1: Outcoming, T2: Outcoming, T3: Outcoming> Outcoming for (T1, T2, T3) {
+    const IS_NEED_READ: bool = T1::IS_NEED_READ || T2::IS_NEED_READ || T3::IS_NEED_READ;
+
     #[cfg(not(feature = "std"))]
     fn args(&self, args: &mut Vec<u32>) -> Result<(), ProtocolError> {
         self.0.args(args)?;
@@ -1868,13 +1697,14 @@ impl<T1: Outcoming, T2: Outcoming, T3: Outcoming> Outcoming for (T1, T2, T3) {
         let t3 = T3::read(heap, args)?;
         Ok((t1, t2, t3))
     }
-
-    fn is_need_read() -> bool {
-        T1::is_need_read() || T2::is_need_read() || T3::is_need_read()
-    }
 }
 
 impl<T1: Incoming, T2: Incoming, T3: Incoming, T4: Incoming> Incoming for (T1, T2, T3, T4) {
+    const IS_NEED_INIT_FILL: bool = T1::IS_NEED_INIT_FILL
+        || T2::IS_NEED_INIT_FILL
+        || T3::IS_NEED_INIT_FILL
+        || T4::IS_NEED_INIT_FILL;
+
     #[cfg(not(feature = "std"))]
     fn init(args: &mut IterMut<u32>) -> Result<(u32, Self), ProtocolError> {
         let (_, t1) = T1::init(args)?;
@@ -1901,16 +1731,12 @@ impl<T1: Incoming, T2: Incoming, T3: Incoming, T4: Incoming> Incoming for (T1, T
         self.3.fill(heap, args)?;
         Ok(())
     }
-
-    fn is_need_init_fill() -> bool {
-        T1::is_need_init_fill()
-            || T2::is_need_init_fill()
-            || T3::is_need_init_fill()
-            || T4::is_need_init_fill()
-    }
 }
 
 impl<T1: Outcoming, T2: Outcoming, T3: Outcoming, T4: Outcoming> Outcoming for (T1, T2, T3, T4) {
+    const IS_NEED_READ: bool =
+        T1::IS_NEED_READ || T2::IS_NEED_READ || T3::IS_NEED_READ || T4::IS_NEED_READ;
+
     #[cfg(not(feature = "std"))]
     fn args(&self, args: &mut Vec<u32>) -> Result<(), ProtocolError> {
         self.0.args(args)?;
@@ -1928,13 +1754,11 @@ impl<T1: Outcoming, T2: Outcoming, T3: Outcoming, T4: Outcoming> Outcoming for (
         let t4 = T4::read(heap, args)?;
         Ok((t1, t2, t3, t4))
     }
-
-    fn is_need_read() -> bool {
-        T1::is_need_read() || T2::is_need_read() || T3::is_need_read() || T4::is_need_read()
-    }
 }
 
 impl<T: Incoming> Incoming for Box<T> {
+    const IS_NEED_INIT_FILL: bool = T::IS_NEED_INIT_FILL;
+
     #[cfg(not(feature = "std"))]
     fn init(args: &mut IterMut<u32>) -> Result<(u32, Self), ProtocolError> {
         let (_, t) = T::init(args)?;
@@ -1952,13 +1776,11 @@ impl<T: Incoming> Incoming for Box<T> {
         self.as_ref().fill(heap, args)?;
         Ok(())
     }
-
-    fn is_need_init_fill() -> bool {
-        T::is_need_init_fill()
-    }
 }
 
 impl<T: Outcoming> Outcoming for Box<T> {
+    const IS_NEED_READ: bool = T::IS_NEED_READ;
+
     #[cfg(not(feature = "std"))]
     fn args(&self, args: &mut Vec<u32>) -> Result<(), ProtocolError> {
         self.as_ref().args(args)?;
@@ -1969,10 +1791,6 @@ impl<T: Outcoming> Outcoming for Box<T> {
     fn read(heap: &[u8], args: &mut Iter<u32>) -> Result<Self, ProtocolError> {
         let t = T::read(heap, args)?;
         Ok(Box::new(t))
-    }
-
-    fn is_need_read() -> bool {
-        T::is_need_read()
     }
 }
 
