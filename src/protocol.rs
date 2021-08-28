@@ -673,68 +673,6 @@ impl Outcoming for f64 {
     }
 }
 
-impl Incoming for String {
-    // TODO: don't copy bytes, read in place (построить структуру на месте)?
-    #[cfg(not(feature = "std"))]
-    fn init(args: &mut IterMut<u32>) -> Result<(u32, Self), ProtocolError> {
-        // узнаем длину строки
-        let arg = args.next().ok_or(ProtocolError(ARGS_NEXT_ERROR))?;
-        let len = *arg as usize;
-        // создаем массив байт указанной длины состоящий из нулевых байт
-        let vec = vec![0u8; len];
-        // тут будет ошибка? нулевые байты не валидная utf-8 строка
-        // нет, так как метод from_utf8 проверяет на валидность, но страдает производительность
-        // let s = String::with_capacity(len); // TODO: ?
-        // TODO: from_utf8_unchecked?
-        let string = String::from_utf8(vec).map_err(|_| ProtocolError(STRING_FROM_BYTES_ERROR))?;
-        let ptr = string.as_ptr() as u32;
-        *arg = ptr;
-        Ok((ptr, string)) // why ptr?
-    }
-
-    #[cfg(feature = "std")]
-    fn args(&self, args: &mut Vec<u32>) -> Result<(), ProtocolError> {
-        args.push(self.len() as u32);
-        Ok(())
-    }
-
-    #[cfg(feature = "std")]
-    fn fill(&self, heap: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), ProtocolError> {
-        let ptr: usize = *args
-            .next()
-            .ok_or_else(|| ProtocolError("args is end".to_string()))?
-            as usize; // its pointer to string
-        let mut pointer = ptr;
-        for byte in self.as_bytes() {
-            heap[pointer] = *byte;
-            pointer += 1;
-        }
-        Ok(())
-    }
-}
-
-impl Outcoming for String {
-    #[cfg(not(feature = "std"))]
-    fn args(&self, args: &mut Vec<u32>) -> Result<(), ProtocolError> {
-        args.push(self.len() as u32);
-        args.push(self.as_ptr() as u32);
-        Ok(())
-    }
-
-    #[cfg(feature = "std")]
-    fn read(heap: &[u8], args: &mut Iter<u32>) -> Result<Self, ProtocolError> {
-        let len = *args
-            .next()
-            .ok_or_else(|| ProtocolError("args is end".to_string()))? as usize;
-        let ptr = *args
-            .next()
-            .ok_or_else(|| ProtocolError("args is end".to_string()))? as usize;
-        let bytes = &heap[ptr..ptr + len];
-        // TODO: or from_utf8_unchecked ?
-        Ok(String::from_utf8(bytes.to_vec())?)
-    }
-}
-
 #[cfg(feature = "chrono")]
 impl Incoming for Duration {
     #[cfg(not(feature = "std"))]
@@ -1236,6 +1174,68 @@ impl Outcoming for Bytes {
     }
 }
 
+impl Incoming for String {
+    const IS_NEED_INIT_FILL: bool = true;
+
+    #[cfg(not(feature = "std"))]
+    fn init(args: &mut IterMut<u32>) -> Result<(u32, Self), ProtocolError> {
+        // узнаем длину строки
+        let arg = args.next().ok_or(ProtocolError(ARGS_NEXT_ERROR))?;
+        let len = *arg as usize;
+        // создаем массив байт указанной длины состоящий из нулевых байт
+        let vec = vec![0u8; len];
+        // let s = String::with_capacity(len);
+        let string = String::from_utf8_unchecked(vec);
+        let ptr = string.as_ptr() as u32;
+        *arg = ptr;
+        Ok((ptr, string)) // why ptr?
+    }
+
+    #[cfg(feature = "std")]
+    fn args(&self, args: &mut Vec<u32>) -> Result<(), ProtocolError> {
+        args.push(self.len() as u32);
+        Ok(())
+    }
+
+    #[cfg(feature = "std")]
+    fn fill(&self, heap: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), ProtocolError> {
+        let ptr: usize = *args
+            .next()
+            .ok_or_else(|| ProtocolError("args is end".to_string()))?
+            as usize; // its pointer to string
+        let mut pointer = ptr;
+        for byte in self.as_bytes() {
+            heap[pointer] = *byte;
+            pointer += 1;
+        }
+        Ok(())
+    }
+}
+
+impl Outcoming for String {
+    const IS_NEED_READ: bool = true;
+
+    #[cfg(not(feature = "std"))]
+    fn args(&self, args: &mut Vec<u32>) -> Result<(), ProtocolError> {
+        args.push(self.len() as u32);
+        args.push(self.as_ptr() as u32);
+        Ok(())
+    }
+
+    #[cfg(feature = "std")]
+    fn read(heap: &[u8], args: &mut Iter<u32>) -> Result<Self, ProtocolError> {
+        let len = *args
+            .next()
+            .ok_or_else(|| ProtocolError("args is end".to_string()))? as usize;
+        let ptr = *args
+            .next()
+            .ok_or_else(|| ProtocolError("args is end".to_string()))? as usize;
+        let bytes = &heap[ptr..ptr + len];
+        Ok(String::from_utf8(bytes.to_vec())?)
+    }
+}
+
+// TODO: other realization for bytes vec
 impl<T: Incoming> Incoming for Vec<T> {
     const IS_NEED_INIT_FILL: bool = T::IS_NEED_INIT_FILL;
 
