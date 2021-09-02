@@ -1174,7 +1174,7 @@ impl Outcoming for Bytes {
     }
 }
 
-impl Incoming for String {
+/*impl Incoming for String {
     const IS_NEED_INIT_FILL: bool = true;
 
     #[cfg(not(feature = "std"))]
@@ -1185,7 +1185,7 @@ impl Incoming for String {
         // создаем массив байт указанной длины состоящий из нулевых байт
         let vec = vec![0u8; len];
         // let s = String::with_capacity(len);
-        let string = String::from_utf8_unchecked(vec);
+        let string = unsafe { String::from_utf8_unchecked(vec) };
         let ptr = string.as_ptr() as u32;
         *arg = ptr;
         Ok((ptr, string)) // why ptr?
@@ -1210,9 +1210,9 @@ impl Incoming for String {
         }
         Ok(())
     }
-}
+}*/
 
-impl Outcoming for String {
+/*impl Outcoming for String {
     const IS_NEED_READ: bool = true;
 
     #[cfg(not(feature = "std"))]
@@ -1232,6 +1232,122 @@ impl Outcoming for String {
             .ok_or_else(|| ProtocolError("args is end".to_string()))? as usize;
         let bytes = &heap[ptr..ptr + len];
         Ok(String::from_utf8(bytes.to_vec())?)
+    }
+}*/
+
+impl Incoming for String {
+    #[cfg(not(feature = "std"))]
+    fn init(args: &mut IterMut<u32>) -> Result<(u32, Self), ProtocolError> {
+        let len = *args.next().ok_or(ProtocolError(ARGS_NEXT_ERROR))? as usize;
+        let quot = len / 4;
+        let rem = len % 4;
+        let is_divided = rem == 0;
+        let mut vec: Vec<u8> = Vec::with_capacity(len);
+
+        for _ in 0..quot {
+            let u = *args.next().ok_or(ProtocolError(ARGS_NEXT_ERROR))?;
+            let bytes: [u8; 4] = u.to_le_bytes();
+            for byte in &bytes {
+                vec.push(*byte);
+            }
+        }
+
+        if !is_divided {
+            let u = *args.next().ok_or(ProtocolError(ARGS_NEXT_ERROR))?;
+            let bytes: [u8; 4] = u.to_le_bytes();
+            let mut iter = bytes.iter();
+            for _ in 0..rem {
+                let byte = *iter.next().ok_or(ProtocolError(ARGS_NEXT_ERROR))?;
+                vec.push(byte);
+            }
+        }
+
+        let s = unsafe { String::from_utf8_unchecked(vec) };
+
+        Ok((0, s))
+    }
+
+    #[cfg(feature = "std")]
+    fn args(&self, args: &mut Vec<u32>) -> Result<(), ProtocolError> {
+        let len = self.len();
+        args.push(len as u32);
+
+        let quot = len / 4;
+        let rem = len % 4;
+        let is_divided = rem == 0;
+        let count = if is_divided { quot } else { quot + 1 };
+        let mut vec: Vec<u32> = Vec::with_capacity(count);
+        let mut iter = self.as_bytes().iter();
+
+        for _ in 0..quot {
+            let bytes: [u8; 4] = [
+                *iter
+                    .next()
+                    .ok_or_else(|| ProtocolError("args is end".to_string()))?,
+                *iter
+                    .next()
+                    .ok_or_else(|| ProtocolError("args is end".to_string()))?,
+                *iter
+                    .next()
+                    .ok_or_else(|| ProtocolError("args is end".to_string()))?,
+                *iter
+                    .next()
+                    .ok_or_else(|| ProtocolError("args is end".to_string()))?,
+            ];
+
+            let u = u32::from_le_bytes(bytes);
+            vec.push(u);
+        }
+
+        if !is_divided {
+            let b1 = *iter
+                .next()
+                .ok_or_else(|| ProtocolError("args is end".to_string()))?;
+            let b2 = *iter.next().unwrap_or(&0);
+            let b3 = *iter.next().unwrap_or(&0);
+            let b4 = *iter.next().unwrap_or(&0);
+            let u = u32::from_le_bytes([b1, b2, b3, b4]);
+            vec.push(u);
+        }
+
+        args.append(&mut vec);
+
+        Ok(())
+    }
+
+    #[cfg(feature = "std")]
+    fn fill(&self, _: &mut RefMut<[u8]>, args: &mut Iter<u32>) -> Result<(), ProtocolError> {
+        args.next()
+            .ok_or_else(|| ProtocolError("args is end".to_string()))?; // len
+        let len = self.len();
+        let quot = len / 4;
+        let rem = len % 4;
+        let is_divided = rem == 0;
+        let count = if is_divided { quot } else { quot + 1 };
+
+        for _ in 0..count {
+            args.next()
+                .ok_or_else(|| ProtocolError("args is end".to_string()))?;
+        }
+        Ok(())
+    }
+}
+
+impl Outcoming for String {
+    #[cfg(not(feature = "std"))]
+    fn args(&self, args: &mut Vec<u32>) -> Result<(), ProtocolError> {
+        let bytes = self.as_bytes().to_vec();
+        let bytes = Bytes(bytes);
+        bytes.args(args)?;
+        Ok(())
+    }
+
+    #[cfg(feature = "std")]
+    fn read(heap: &[u8], args: &mut Iter<u32>) -> Result<Self, ProtocolError> {
+        let bytes = Bytes::read(heap, args)?;
+        let bytes = bytes.0;
+        let s = String::from_utf8(bytes);
+        s.map_err(|e| e.into())
     }
 }
 
