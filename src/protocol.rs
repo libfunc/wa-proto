@@ -120,9 +120,10 @@ Incoming trait (Deserializable) - (Входящее сообщение) если
 
 Будет в основном использоваться для передачи сообщений между wasm модулем и Rust рантаймом.
 Для сериализации и десериализации в БД рекомендуется использовать serde.
+T - тип, который сериализуем
 */
 // #[cfg(all(target = "wasm32-unknown-unknown"))]
-pub trait Incoming {
+pub trait Incoming<T = Self> {
     /**
     Указывает на то что необходимо инициализировать данные, а затем заполнить
     если true - получается 2 шага
@@ -164,7 +165,7 @@ Outcoming trait (Serializable) - (Исходящее сообщение) есл�
 Будет в основном использоваться для передачи сообщений между wasm модулем и Rust рантаймом.
 Для сериализации и десериализации в БД рекомендуется использовать serde.
 */
-pub trait Outcoming {
+pub trait Outcoming<T = Self> {
     /**
     Указывает на то что необходимо прочитать данные из памяти песочницы
      */
@@ -1336,18 +1337,80 @@ impl Incoming for String {
 impl Outcoming for String {
     #[cfg(not(feature = "std"))]
     fn args(&self, args: &mut Vec<u32>) -> Result<(), ProtocolError> {
-        let bytes = self.as_bytes().to_vec();
-        let bytes = Bytes(bytes);
-        bytes.args(args)?;
+        let len = self.len();
+        args.push(len as u32);
+
+        // TODO: for wasm64 other logic
+        let quot = len / 4;
+        let rem = len % 4;
+        let is_divided = rem == 0;
+        let count = if is_divided { quot } else { quot + 1 };
+        let mut vec: Vec<u32> = Vec::with_capacity(count);
+        let mut iter = self.as_bytes().iter();
+
+        for _ in 0..quot {
+            let bytes: [u8; 4] = [
+                *iter.next().ok_or(ProtocolError(ARGS_NEXT_ERROR))?,
+                *iter.next().ok_or(ProtocolError(ARGS_NEXT_ERROR))?,
+                *iter.next().ok_or(ProtocolError(ARGS_NEXT_ERROR))?,
+                *iter.next().ok_or(ProtocolError(ARGS_NEXT_ERROR))?,
+            ];
+
+            let u = u32::from_le_bytes(bytes);
+            vec.push(u);
+        }
+
+        if !is_divided {
+            let b1 = *iter.next().ok_or(ProtocolError(ARGS_NEXT_ERROR))?;
+            let b2 = *iter.next().unwrap_or(&0);
+            let b3 = *iter.next().unwrap_or(&0);
+            let b4 = *iter.next().unwrap_or(&0);
+            let u = u32::from_le_bytes([b1, b2, b3, b4]);
+            vec.push(u);
+        }
+
+        args.append(&mut vec);
+
         Ok(())
     }
 
     #[cfg(feature = "std")]
-    fn read(heap: &[u8], args: &mut Iter<u32>) -> Result<Self, ProtocolError> {
-        let bytes = Bytes::read(heap, args)?;
-        let bytes = bytes.0;
-        let s = String::from_utf8(bytes);
-        s.map_err(|e| e.into())
+    fn read(_: &[u8], args: &mut Iter<u32>) -> Result<Self, ProtocolError> {
+        let len = *args
+            .next()
+            .ok_or_else(|| ProtocolError("args is end".to_string()))? as usize;
+        let quot = len / 4;
+        let rem = len % 4;
+        let is_divided = rem == 0;
+        let mut vec: Vec<u8> = Vec::with_capacity(len);
+
+        for _ in 0..quot {
+            let u = *args
+                .next()
+                .ok_or_else(|| ProtocolError("args is end".to_string()))?;
+            let bytes: [u8; 4] = u.to_le_bytes();
+            for byte in &bytes {
+                vec.push(*byte);
+            }
+        }
+
+        if !is_divided {
+            let u = *args
+                .next()
+                .ok_or_else(|| ProtocolError("args is end".to_string()))?;
+            let bytes: [u8; 4] = u.to_le_bytes();
+            let mut iter = bytes.iter();
+            for _ in 0..rem {
+                let byte = *iter
+                    .next()
+                    .ok_or_else(|| ProtocolError("args is end".to_string()))?;
+                vec.push(byte);
+            }
+        }
+
+        let s = String::from_utf8(vec)?;
+
+        Ok(s)
     }
 }
 
