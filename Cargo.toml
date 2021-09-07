@@ -1,6 +1,6 @@
 [package]
 name = "wa-proto"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Rail Khusnutdinov <mail@rail-ka.ru>"]
 description = "(de)serialization protocol for webassembly engines"
 keywords = ["webassembly", "wasm", "wasi", "serialization", "protocol"]
