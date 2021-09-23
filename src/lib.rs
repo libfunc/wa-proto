@@ -43,4 +43,6 @@ pub trait PrimitiveFromEnum {
     type PrimitiveEnum;
 
     fn get_primitive_enum(&self) -> Self::PrimitiveEnum;
+
+    fn primitive_name() -> &'static str;
 }
