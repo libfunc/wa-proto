@@ -16,11 +16,6 @@ edition = "2018"
 default = ["std"]
 std = [
     "map",
-#    "chrono",
-#    "chrono/alloc",
-#    "chrono/std",
-#    "chrono/clock",
-    "time",
     "time/std",
 ]
 hashmap = ["hashbrown"]
@@ -39,4 +34,4 @@ optional = true
 [dependencies.time]
 version = "0.3.2"
 default-features = false
-optional = true
+#optional = true
