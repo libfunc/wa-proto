@@ -798,7 +798,7 @@ impl Outcoming for Date<Utc> {
     }
 }
 
-#[cfg(feature = "time")]
+// #[cfg(feature = "time")]
 impl Incoming for time::Duration {
     #[cfg(not(feature = "std"))]
     fn init(args: &mut IterMut<u32>) -> Result<(u32, Self), ProtocolError> {
@@ -824,7 +824,7 @@ impl Incoming for time::Duration {
     }
 }
 
-#[cfg(feature = "time")]
+// #[cfg(feature = "time")]
 impl Outcoming for time::Duration {
     #[cfg(not(feature = "std"))]
     fn args(&self, args: &mut Vec<u32>) -> Result<(), ProtocolError> {
@@ -840,7 +840,7 @@ impl Outcoming for time::Duration {
     }
 }
 
-#[cfg(feature = "time")]
+// #[cfg(feature = "time")]
 impl Incoming for time::OffsetDateTime {
     #[cfg(not(feature = "std"))]
     fn init(args: &mut IterMut<u32>) -> Result<(u32, Self), ProtocolError> {
@@ -869,7 +869,7 @@ impl Incoming for time::OffsetDateTime {
     }
 }
 
-#[cfg(feature = "time")]
+// #[cfg(feature = "time")]
 impl Outcoming for time::OffsetDateTime {
     #[cfg(not(feature = "std"))]
     fn args(&self, args: &mut Vec<u32>) -> Result<(), ProtocolError> {
@@ -885,7 +885,7 @@ impl Outcoming for time::OffsetDateTime {
     }
 }
 
-#[cfg(feature = "time")]
+// #[cfg(feature = "time")]
 impl Incoming for time::Date {
     #[cfg(not(feature = "std"))]
     fn init(args: &mut IterMut<u32>) -> Result<(u32, Self), ProtocolError> {
@@ -914,7 +914,7 @@ impl Incoming for time::Date {
     }
 }
 
-#[cfg(feature = "time")]
+// #[cfg(feature = "time")]
 impl Outcoming for time::Date {
     #[cfg(not(feature = "std"))]
     fn args(&self, args: &mut Vec<u32>) -> Result<(), ProtocolError> {
@@ -933,7 +933,7 @@ impl Outcoming for time::Date {
 /**
 convert u32 to time::Time
 */
-#[cfg(feature = "time")]
+// #[cfg(feature = "time")]
 pub const fn time_from_u32(u: u32) -> Result<time::Time, time::error::ComponentRange> {
     let bytes: [u8; 4] = u.to_le_bytes();
     let hour = bytes[0];
@@ -945,7 +945,7 @@ pub const fn time_from_u32(u: u32) -> Result<time::Time, time::error::ComponentR
 /**
 convert time::Time to u32
 */
-#[cfg(feature = "time")]
+// #[cfg(feature = "time")]
 pub const fn time_into_u32(time: &time::Time) -> u32 {
     let hour = time.hour();
     let minute = time.minute();
@@ -953,7 +953,7 @@ pub const fn time_into_u32(time: &time::Time) -> u32 {
     u32::from_le_bytes([hour, minute, second, 0])
 }
 
-#[cfg(feature = "time")]
+// #[cfg(feature = "time")]
 impl Incoming for time::Time {
     #[cfg(not(feature = "std"))]
     fn init(args: &mut IterMut<u32>) -> Result<(u32, Self), ProtocolError> {
@@ -977,7 +977,7 @@ impl Incoming for time::Time {
     }
 }
 
-#[cfg(feature = "time")]
+// #[cfg(feature = "time")]
 impl Outcoming for time::Time {
     #[cfg(not(feature = "std"))]
     fn args(&self, args: &mut Vec<u32>) -> Result<(), ProtocolError> {
