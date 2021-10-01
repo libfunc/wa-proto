@@ -1,6 +1,5 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-// #[cfg_attr(not(feature = "std"), macro_use)]
 #[cfg(not(feature = "std"))]
 extern crate alloc;
 
@@ -16,6 +15,7 @@ use rustc_hash::FxHasher;
 use std::collections::HashMap;
 
 pub use protocol::*;
+pub use wa_proto_macro::*;
 
 #[cfg(all(any(feature = "hashmap", feature = "std"), feature = "map"))]
 type FxBuildHasher = BuildHasherDefault<FxHasher>;

@@ -34,4 +34,7 @@ optional = true
 [dependencies.time]
 version = "0.3.2"
 default-features = false
-#optional = true
+
+[dependencies.wa-proto-macro]
+#git = "ssh://git@github.com/libfunc/wa-proto-macro.git"
+path = "../wa-proto-macro"
