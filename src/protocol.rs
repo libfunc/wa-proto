@@ -947,10 +947,8 @@ convert time::Time to u32
 */
 // #[cfg(feature = "time")]
 pub const fn time_into_u32(time: &time::Time) -> u32 {
-    let hour = time.hour();
-    let minute = time.minute();
-    let second = time.second();
-    u32::from_le_bytes([hour, minute, second, 0])
+    let (h, m, s) = time.as_hms();
+    u32::from_le_bytes([h, m, s, 0])
 }
 
 // #[cfg(feature = "time")]
