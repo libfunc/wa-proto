@@ -10,7 +10,7 @@ homepage = "https://github.com/libfunc/wa-proto/"
 documentation = "https://docs.rs/wa-proto/"
 repository = "https://github.com/libfunc/wa-proto/"
 readme = "README.md"
-edition = "2018"
+edition = "2021"
 
 [features]
 default = ["std"]
