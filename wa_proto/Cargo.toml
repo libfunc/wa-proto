@@ -35,7 +35,7 @@ optional = true
 version = "0.3.2"
 default-features = false
 
-[dependencies.wa-proto-macro]
+[dependencies.wa_proto_macro]
 version = "0.1.2"
 # git = "ssh://git@github.com/libfunc/wa-proto-macro.git"
 #path = "../wa-proto-macro"
