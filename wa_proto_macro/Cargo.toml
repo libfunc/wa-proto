@@ -1,5 +1,5 @@
 [package]
-name = "wa-proto-macro"
+name = "wa_proto_macro"
 version = "0.1.2"
 authors = ["Rail Khusnutdinov <mail@rail-ka.ru>"]
 description = "macros for (de)serialization protocol for webassembly engines"
