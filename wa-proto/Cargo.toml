@@ -9,7 +9,7 @@ license = "MIT OR Apache-2.0"
 homepage = "https://github.com/libfunc/wa-proto/"
 documentation = "https://docs.rs/wa-proto/"
 repository = "https://github.com/libfunc/wa-proto/"
-readme = "README.md"
+readme = "../README.md"
 edition = "2021"
 
 [features]
@@ -23,7 +23,7 @@ map = ["rustc-hash"]
 no_std = ["hashbrown"] # rustc-hash optional for no_std
 
 [dependencies]
-hashbrown = { version = "0.11", optional = true }
+hashbrown = { version = "0.12", optional = true }
 rustc-hash = { version = "1.1", optional = true, default-features = false }
 
 [dependencies.chrono] # date and time support for rust
@@ -36,6 +36,7 @@ version = "0.3.2"
 default-features = false
 
 [dependencies.wa-proto-macro]
-git = "ssh://git@github.com/libfunc/wa-proto-macro.git"
+version = "0.1.2"
+# git = "ssh://git@github.com/libfunc/wa-proto-macro.git"
 #path = "../wa-proto-macro"
  
